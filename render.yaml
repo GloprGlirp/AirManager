@@ -1,16 +1,13 @@
-# Render Blueprint: Web-Service + kostenlose Postgres-Datenbank für dauerhafte Spielstände
+# Render Blueprint: nur der Web-Service.
+# DATABASE_URL = Internal Database URL deiner bestehenden Render-Postgres
+# (die Tabellen heißen ab_users / ab_sessions und stören andere Projekte nicht).
 services:
   - type: web
-    name: flightline-airbase
+    name: airmanager
     runtime: node
     plan: free
     buildCommand: npm install
     startCommand: npm start
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: flightline-db
-          property: connectionString
-databases:
-  - name: flightline-db
-    plan: free
+        sync: false

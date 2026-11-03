@@ -30,9 +30,14 @@ Passwörter werden mit scrypt gehasht, Sessions laufen 30 Tage.
 
 ## Online stellen (Render)
 
-1. Projekt in ein GitHub-Repo pushen.
-2. Auf Render **New → Blueprint** wählen und das Repo verbinden – `render.yaml` legt Web-Service **und** eine kostenlose Postgres-Datenbank an.
-3. Fertig. Wichtig: Ohne Datenbank würde Render die `db.json` bei jedem Neustart löschen.
+Render erlaubt nur **eine** kostenlose Postgres-Datenbank – das Spiel nutzt einfach die, die du schon hast. Seine Tabellen heißen `ab_users` und `ab_sessions` und kommen anderen Projekten in derselben Datenbank nicht in die Quere.
+
+1. Render-Dashboard → deine bestehende Postgres → **Connections** → **Internal Database URL** kopieren.
+2. **New → Blueprint** → Repo `AirManager` wählen. Render fragt nach `DATABASE_URL` → URL einfügen.
+   (Alternativ **New → Web Service**: Build `npm install`, Start `npm start`, Umgebungsvariable `DATABASE_URL` setzen.)
+3. Fertig – die Tabellen werden beim ersten Start automatisch angelegt.
+
+Ohne `DATABASE_URL` speichert der Server in `data/db.json` – auf Render geht die Datei bei jedem Neustart verloren.
 
 ## Steuerung
 

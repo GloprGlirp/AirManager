@@ -56,7 +56,14 @@ function fileDb(dir) {
 // ---------------------------------------------------------------------------
 async function pgDb(url) {
   const { default: pg } = await import('pg');
-  const pool = new pg.Pool({ connectionString: url, ssl: /localhost|127\.0\.0\.1/.test(url) ? false : { rejectUnauthorized: false } });
+  // Erst mit SSL versuchen (externe URLs), sonst ohne (interne Render-URL, lokal)
+  let pool = null;
+  for (const ssl of [{ rejectUnauthorized: false }, false]) {
+    const p = new pg.Pool({ connectionString: url, ssl, max: 5 });
+    try { await p.query('SELECT 1'); pool = p; break; }
+    catch (e) { await p.end().catch(() => {}); if (ssl === false) throw e; }
+  }
+  // Eigene Tabellen mit Präfix ab_ – verträgt sich mit anderen Spielen in derselben Datenbank
   await pool.query(`
     CREATE TABLE IF NOT EXISTS ab_users (
       id SERIAL PRIMARY KEY, username TEXT NOT NULL, lower TEXT UNIQUE NOT NULL,
