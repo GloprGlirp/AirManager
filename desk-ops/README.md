@@ -1,6 +1,6 @@
 # Kestrel Field Ops – Ops-Desk-Modus
 
-Eigenständiges Indie-Spiel im AirManager-Repo: Du sitzt im Operations-Büro am Schreibtisch, schaust aus dem Fenster auf Startbahn 27 und steuerst den Fliegerhorst über das Basis-Terminal.
+Eigenständiges Indie-Spiel im Pixel-Look im AirManager-Repo: Du sitzt im Operations-Büro am Schreibtisch, schaust aus dem Fenster auf Startbahn 27 und steuerst den Fliegerhorst über das Basis-Terminal.
 
 Läuft komplett im Browser, ohne Server-Logik und ohne Account. Der Spielstand liegt im `localStorage` des Browsers.
 
@@ -37,6 +37,7 @@ Der Code liegt in Teilen unter `src/`, `build.sh` setzt daraus `public/desk-ops/
 | `10-sim-base.js` | Bau, Ausbildung, Beschaffung |
 | `13-campaign.js` | Kampagne: Schichten, Ziele, XP, Ränge, Freischaltungen |
 | `06/07/12-scene-*.js` | Fensteransicht (Canvas) |
+| `14-pixel.js` | Pixel-Look: Palette und Dithering der Fensteransicht |
 | `08-ui-panels.js`, `09-ui-main.js` | Terminal, Tac Map, Eingabe, Hauptschleife |
 | `11-audio.js` | Sound |
 

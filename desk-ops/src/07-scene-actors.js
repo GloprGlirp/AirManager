@@ -135,12 +135,12 @@ function drawService(o, p, L, now) {
   const k = 0.24 + 0.76 * L, len = UL() * (TYPES[o.type].size || 1), X = p.x * W, Y = p.y * H, u = UL() * 0.55;
   const box = (x, y, w, h, c) => { cx.fillStyle = rgb(shade(c, k)); cx.fillRect(x, y - h, w, h); };
   const wheel = (x, y) => { cx.fillStyle = rgb(shade([22, 22, 22], k)); ell(x, y, u * 0.07, u * 0.07); };
-  const person = (x, y) => { box(x - 1, y, 2.4, u * 0.28, [40, 46, 52]); cx.fillStyle = `rgba(230,220,90,${0.5 + 0.4 * L})`; cx.fillRect(x - 1, y - u * 0.22, 2.4, u * 0.08); };
+  const person = (x, y) => { box(x - PX / 2, y, PX, u * 0.28, [40, 46, 52]); cx.fillStyle = `rgba(230,220,90,${0.5 + 0.4 * L})`; cx.fillRect(x - PX / 2, y - u * 0.22, PX, u * 0.08); };
   if (kind === 'refuel') {
     const tx = X + len * 0.55, ty = Y - 2;
     box(tx, ty - u * 0.07, u * 0.75, u * 0.3, [200, 200, 188]); box(tx + u * 0.75, ty - u * 0.07, u * 0.25, u * 0.36, [150, 40, 34]);
     wheel(tx + u * 0.12, ty); wheel(tx + u * 0.6, ty); wheel(tx + u * 0.88, ty);
-    cx.strokeStyle = rgb(shade([20, 20, 20], k)); cx.lineWidth = 1.5; cx.beginPath(); cx.moveTo(tx + 2, ty - u * 0.15); cx.quadraticCurveTo(tx - len * 0.15, ty + 4, X + len * 0.05, Y - len * 0.1); cx.stroke();
+    cx.strokeStyle = rgb(shade([20, 20, 20], k)); cx.lineWidth = PX; cx.beginPath(); cx.moveTo(tx + 2, ty - u * 0.15); cx.quadraticCurveTo(tx - len * 0.15, ty + 4, X + len * 0.05, Y - len * 0.1); cx.stroke();
     person(tx - u * 0.1, Y + 2);
   } else if (kind === 'arm') {
     const tx = X + len * 0.15, ty = Y + u * 0.35;
@@ -197,14 +197,14 @@ function drawWeather(L, now, dtR) {
   }
   if (kind === 'rain' || kind === 'storm') {
     const n = kind === 'storm' ? 160 : 90, slant = S.wx.kt * 0.4;
-    cx.strokeStyle = `rgba(190,202,218,${0.18 + 0.12 * L})`; cx.lineWidth = 1; cx.beginPath();
+    cx.strokeStyle = `rgba(190,202,218,${0.18 + 0.12 * L})`; cx.lineWidth = PX; cx.beginPath();
     for (let i = 0; i < n; i++) {
       const x = (((i * 0.7311) % 1) * W + now * 0.02 * slant) % (W + 20) - 10, y = (((i * 0.618) + now * 0.0011 * (1 + (i % 3) * 0.25)) % 1) * H;
       cx.moveTo(x, y); cx.lineTo(x - slant * 0.6, y + 11);
     }
     cx.stroke();
     cx.fillStyle = `rgba(210,220,235,${0.12 + 0.08 * L})`;
-    for (let i = 0; i < 40; i++) ell(((i * 0.377) % 1) * W, ((i * 0.5813) % 1) * H, 1.6, 2);
+    for (let i = 0; i < 40; i++) ell(((i * 0.377) % 1) * W, ((i * 0.5813) % 1) * H, PX * 0.6, PX * 0.8);
     if (kind === 'storm' && S.speed && Math.random() < dtR * 0.25) { FLASH = 1; sfxThunder(); }
   }
   if (FLASH > 0) { cx.fillStyle = `rgba(230,236,255,${FLASH * 0.45})`; cx.fillRect(0, 0, W, H); FLASH = Math.max(0, FLASH - dtR * 3); }
@@ -232,4 +232,5 @@ function drawScene(now, dtR) {
   for (const [o, p] of actors) { drawPlane(o, p, Le, now); drawService(o, p, Le, now); }
   for (const f of S.fx) { if (f.kind === 'smoke' && f.at === 'rwy') drawSmoke(f, Le, now); if (f.kind === 'raid') drawRaid(f, Le, now); if (f.kind === 'sam') drawSamFx(f, Le); }
   drawWeather(Le, now, dtR);
+  quantize();
 }

@@ -13,21 +13,21 @@ function drawHangars(k, night, now, base) {
       const open = occ.some(a => a.status !== 'ready' || a.task);
       cx.fillStyle = rgb(shade(open ? [30, 32, 34] : [82, 88, 86], k)); cx.fillRect(X + w * 0.1, base - h * 0.75, w * 0.8, h * 0.75);
       if (open && night > 0.3) { cx.fillStyle = `rgba(255,214,150,${0.25 + night * 0.3})`; cx.fillRect(X + w * 0.1, base - h * 0.75, w * 0.8, h * 0.75); }
-      if (!open) { cx.fillStyle = rgb(shade([64, 70, 68], k)); for (let d = 1; d < 6; d++) cx.fillRect(X + w * (0.1 + d * 0.8 / 6), base - h * 0.75, 1, h * 0.75); }
-      cx.fillStyle = `rgba(240,240,232,${0.35 + 0.4 * (1 - night)})`; cx.font = `600 ${Math.max(8, H * 0.024)}px "Barlow Condensed", sans-serif`; cx.textAlign = 'left';
+      if (!open) { cx.fillStyle = rgb(shade([64, 70, 68], k)); for (let d = 1; d < 6; d++) cx.fillRect(X + w * (0.1 + d * 0.8 / 6), base - h * 0.75, PX, h * 0.75); }
+      cx.fillStyle = `rgba(240,240,232,${0.35 + 0.4 * (1 - night)})`; cx.font = `${8 * PX}px "Silkscreen", monospace`; cx.textAlign = 'left';
       cx.fillText(`H${i + 1}`, X + 3, top + h * 0.2);
     } else if (i === S.base.hangar && prog >= 0) {
       cx.fillStyle = rgb(shade([150, 150, 144], k)); cx.fillRect(X, base - 2, w, 3);
-      cx.strokeStyle = rgb(shade([186, 120, 64], k)); cx.lineWidth = 1.2; cx.beginPath();
+      cx.strokeStyle = rgb(shade([186, 120, 64], k)); cx.lineWidth = PX; cx.beginPath();
       const cols = Math.ceil(prog * 8);
       for (let c = 0; c <= cols; c++) { cx.moveTo(X + w * c / 8, base); cx.lineTo(X + w * c / 8, top + h * 0.1); }
       if (prog > 0.4) { cx.moveTo(X, top); cx.ellipse(X + w / 2, top, w / 2, h * 0.35, 0, Math.PI, Math.PI + Math.PI * clamp((prog - 0.4) / 0.6, 0, 1)); }
       cx.stroke();
       const mx = X + w * 1.06, mtop = base - 0.17 * H, swing = Math.sin(now / 1500) * w * 0.15;
-      cx.strokeStyle = rgb(shade([214, 168, 40], k)); cx.lineWidth = 2; cx.beginPath();
+      cx.strokeStyle = rgb(shade([214, 168, 40], k)); cx.lineWidth = 1.5 * PX; cx.beginPath();
       cx.moveTo(mx, base); cx.lineTo(mx, mtop); cx.moveTo(mx + w * 0.15, mtop); cx.lineTo(mx - w * 0.9, mtop); cx.stroke();
-      cx.lineWidth = 1; cx.beginPath(); cx.moveTo(mx - w * 0.5 + swing, mtop); cx.lineTo(mx - w * 0.5 + swing, top - h * 0.3); cx.stroke();
-      if ((now % 1200) < 500) { cx.fillStyle = 'rgba(255,60,50,.9)'; ell(mx, mtop - 2, 1.8, 1.8); }
+      cx.lineWidth = PX; cx.beginPath(); cx.moveTo(mx - w * 0.5 + swing, mtop); cx.lineTo(mx - w * 0.5 + swing, top - h * 0.3); cx.stroke();
+      if ((now % 1200) < 500) { cx.fillStyle = 'rgba(255,60,50,.9)'; ell(mx, mtop - 2, PX, PX); }
     } else {
       cx.fillStyle = rgb(shade([132, 134, 126], k), 0.55); cx.fillRect(X, base - 1.5, w, 2.5);
     }
@@ -44,7 +44,7 @@ function drawBaseExtras(L, k, now) {
     const ry0 = (G.rwy - G.rwyH / 2) * H;
     poly([[0.88 * W, y0], [0.9 * W, y0], [0.97 * W, ry0 + 1], [0.93 * W, ry0 + 1]]);
     poly([[0.12 * W, y0], [0.15 * W, y0], [0.19 * W, ry0 + 1], [0.14 * W, ry0 + 1]]);
-    cx.fillStyle = `rgba(232,190,60,${0.35 + 0.4 * L})`; cx.fillRect(0.04 * W, FT * H - 0.5, 0.86 * W, 1);
+    cx.fillStyle = `rgba(232,190,60,${0.35 + 0.4 * L})`; cx.fillRect(0.04 * W, FT * H - PX / 2, 0.86 * W, PX);
   }
   const s = UL() * gsc(AD_Y), y = AD_Y * H;
   const unit = (sx, kind, p) => {
@@ -77,14 +77,14 @@ function drawBaseExtras(L, k, now) {
 function drawSamFx(f, L) {
   const t = clamp((S.t - f.born) / f.life, 0, 1), sx = (f.site === 'pat' ? PAT_SITES : SHO_SITES)[f.i] ?? 0.5;
   const at = u => [(sx + f.dir * u * (f.site === 'pat' ? 0.28 : 0.18)) * W, (AD_Y - 0.02 - u * u * 0.62) * H];
-  cx.lineWidth = 2; cx.lineCap = 'round';
+  cx.lineWidth = 1.5 * PX; cx.lineCap = 'round';
   for (let j = 0; j < 14; j++) {
     const u0 = t * j / 14, u1 = t * (j + 1) / 14, [x0, y0] = at(u0), [x1, y1] = at(u1);
     const g = Math.round(lerp(150, 230, L));
     cx.strokeStyle = `rgba(${g},${g},${g},${(0.15 + 0.5 * (j / 14)) * (1 - t * 0.6)})`;
     cx.beginPath(); cx.moveTo(x0, y0); cx.lineTo(x1, y1); cx.stroke();
   }
-  if (t < 0.98) { const [hx, hy] = at(t); cx.fillStyle = 'rgba(255,236,190,.95)'; ell(hx, hy, 2.6, 2.6); cx.fillStyle = 'rgba(255,150,60,.5)'; ell(hx, hy, 6, 6); }
+  if (t < 0.98) { const [hx, hy] = at(t); cx.fillStyle = 'rgba(255,236,190,.95)'; ell(hx, hy, PX, PX); cx.fillStyle = 'rgba(255,150,60,.5)'; ell(hx, hy, 6, 6); }
   if (t < 0.12) { const [x0, y0] = at(0); cx.fillStyle = `rgba(255,190,110,${0.7 * (1 - t / 0.12)})`; ell(x0, y0, 10, 6); }
   cx.lineCap = 'butt';
 }

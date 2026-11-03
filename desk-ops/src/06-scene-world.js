@@ -1,5 +1,6 @@
 // ---------- Window view: sky, scenery, airfield ----------
-const cv = $('#outside'), cx = cv.getContext('2d');
+const cv = $('#outside'), cx = cv.getContext('2d', { willReadFrequently: true });
+let PX = 3;   // size of one screen pixel of the window view, in CSS px
 let W = 300, H = 150, STARS = [], CLOUDS = [], TREES = [];
 const G = { hz: 0.40, bld: 0.478, rwy: 0.575, rwyH: 0.046, twy: 0.69, twyH: 0.024, apr: 0.875 };
 const mix = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
@@ -12,10 +13,10 @@ function UL() { return Math.min(W * 0.062, H * 0.21); }
 
 function sizeScene() {
   const r = cv.getBoundingClientRect();
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
   W = Math.max(60, r.width); H = Math.max(60, r.height);
-  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-  cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  PX = W > 1000 ? 3 : 2;
+  cv.width = Math.max(1, Math.round(W / PX)); cv.height = Math.max(1, Math.round(H / PX));
+  cx.setTransform(1 / PX, 0, 0, 1 / PX, 0, 0);
 }
 function initScenery() {
   let s = 7; const sr = () => (s = (s * 9301 + 49297) % 233280) / 233280;
@@ -41,7 +42,7 @@ function drawSky(L, gold, ov, dtR) {
   g.addColorStop(0, rgb(top)); g.addColorStop(1, rgb(bot));
   cx.fillStyle = g; cx.fillRect(0, 0, W, H * G.hz + 2);
   if (L < 0.35 && ov < 0.6) {
-    for (const st of STARS) { cx.fillStyle = `rgba(225,232,255,${((0.35 - L) / 0.35) * (1 - ov) * (0.35 + st[2] * 0.6)})`; cx.fillRect(st[0] * W, st[1] * H, 1.3, 1.3); }
+    for (const st of STARS) { cx.fillStyle = `rgba(225,232,255,${((0.35 - L) / 0.35) * (1 - ov) * (0.35 + st[2] * 0.6)})`; cx.fillRect(st[0] * W, st[1] * H, PX, PX); }
   }
   const h = hourOf(S.t);
   if (h > 5.5 && h < 20) {           // sun
@@ -87,7 +88,7 @@ function drawFarSide(L, ov, now) {
   box(0.39, 0.105, 0.034, [150, 146, 136]);
   for (let r = 0; r < 2; r++) for (let i = 0; i < 9; i++) {
     cx.fillStyle = night > 0.3 && (i * 7 + r * 3) % 5 ? `rgba(255,214,150,${0.35 + night * 0.5})` : rgb(shade([60, 70, 78], k));
-    cx.fillRect((0.397 + i * 0.0108) * W, base - (0.027 - r * 0.012) * H, W * 0.007, H * 0.006);
+    cx.fillRect((0.397 + i * 0.0108) * W, base - (0.027 - r * 0.012) * H, W * 0.007, Math.max(PX, H * 0.006));
   }
   // control tower
   box(0.515, 0.012, 0.12, [160, 156, 146]);
@@ -95,7 +96,7 @@ function drawFarSide(L, ov, now) {
   cx.fillStyle = night > 0.3 ? `rgba(120,200,190,${0.4 + night * 0.4})` : rgb(shade([46, 72, 80], k));
   cx.fillRect(0.506 * W, base - 0.146 * H, 0.03 * W, 0.024 * H);
   cx.fillStyle = rgb(shade([90, 92, 90], k)); cx.fillRect(0.504 * W, base - 0.124 * H, 0.034 * W, 0.004 * H);
-  if (night > 0.2) { const on = (now / 900) % 2 < 1; cx.fillStyle = on ? 'rgba(120,255,150,.95)' : 'rgba(255,255,240,.95)'; ell(0.521 * W, base - 0.158 * H, 2, 2); }
+  if (night > 0.2) { const on = (now / 900) % 2 < 1; cx.fillStyle = on ? 'rgba(120,255,150,.95)' : 'rgba(255,255,240,.95)'; ell(0.521 * W, base - 0.158 * H, PX, PX); }
   // radar head
   const rx = 0.578 * W;
   cx.fillStyle = rgb(shade([110, 112, 108], k)); cx.fillRect(rx - 2, base - 0.05 * H, 4, 0.05 * H);
@@ -106,7 +107,7 @@ function drawFarSide(L, ov, now) {
   for (const x of [0.86, 0.905, 0.95, 0.815, 0.77].slice(0, 3 + S.base.fuelfarm)) {
     box(x - 0.015, 0.03, 0.036, [176, 178, 172]);
     cx.fillStyle = rgb(shade([196, 198, 192], k)); ell(x * W, base - 0.036 * H, 0.015 * W, 0.004 * H);
-    cx.fillStyle = rgb(shade([96, 100, 98], k)); cx.fillRect((x - 0.015) * W, base - 0.036 * H * lvl - 1, 0.03 * W, 1.5);
+    cx.fillStyle = rgb(shade([96, 100, 98], k)); cx.fillRect((x - 0.015) * W, base - 0.036 * H * lvl - 1, 0.03 * W, PX);
   }
 }
 
@@ -121,39 +122,39 @@ function drawAirfield(L, now) {
   cx.fillRect(0, ry0, W, rh);
   cx.fillStyle = rgb(shade([74, 76, 76], k)); cx.fillRect(0, ty0, W, th);
   cx.fillStyle = paint;
-  cx.fillRect(0, ry0 + 1, W, 1); cx.fillRect(0, ry0 + rh - 2, W, 1);
-  for (let x = 0.08; x < 0.92; x += 0.05) cx.fillRect(x * W, ry0 + rh / 2 - 0.5, 0.025 * W, 1.4);
-  for (let i = 1; i < 7; i++) { cx.fillRect(0.936 * W, ry0 + rh * i / 7.5, 0.026 * W, Math.max(1, rh / 22)); cx.fillRect(0.038 * W, ry0 + rh * i / 7.5, 0.026 * W, Math.max(1, rh / 22)); }
-  for (const x of [0.84, 0.8]) { cx.fillRect(x * W, ry0 + rh * 0.22, 0.02 * W, 1.5); cx.fillRect(x * W, ry0 + rh * 0.74, 0.02 * W, 1.5); }
-  cx.fillStyle = `rgba(232,190,60,${0.4 + 0.4 * L})`; cx.fillRect(0, G.twy * H - 0.5, W, 1);
+  cx.fillRect(0, ry0 + PX, W, PX); cx.fillRect(0, ry0 + rh - 2 * PX, W, PX);
+  for (let x = 0.08; x < 0.92; x += 0.05) cx.fillRect(x * W, ry0 + rh / 2 - PX / 2, 0.025 * W, PX);
+  for (let i = 1; i < 7; i++) { cx.fillRect(0.936 * W, ry0 + rh * i / 7.5, 0.026 * W, PX); cx.fillRect(0.038 * W, ry0 + rh * i / 7.5, 0.026 * W, PX); }
+  for (const x of [0.84, 0.8]) { cx.fillRect(x * W, ry0 + rh * 0.22, 0.02 * W, PX); cx.fillRect(x * W, ry0 + rh * 0.74, 0.02 * W, PX); }
+  cx.fillStyle = `rgba(232,190,60,${0.4 + 0.4 * L})`; cx.fillRect(0, G.twy * H - PX / 2, W, PX);
   // apron and lead-in stubs
   const ay = 0.765 * H;
   cx.fillStyle = rgb(conc);
   for (const x of [...SPOTS, CARGO_SPOT]) cx.fillRect((x - 0.018) * W, ty0 + th, 0.036 * W, ay - ty0 - th + 1);
   cx.fillRect(0, ay, W, H - ay);
-  cx.strokeStyle = rgb(shade([112, 112, 106], k)); cx.lineWidth = 1; cx.beginPath();
+  cx.strokeStyle = rgb(shade([112, 112, 106], k)); cx.lineWidth = PX; cx.beginPath();
   for (let y = ay + 0.04 * H; y < H; y += 0.045 * H) { cx.moveTo(0, y); cx.lineTo(W, y); }
   for (let x = 0.035; x < 1; x += 0.07) { cx.moveTo(x * W, ay); cx.lineTo(x * W, H); }
   cx.stroke();
   cx.fillStyle = `rgba(232,190,60,${0.45 + 0.4 * L})`;
-  cx.font = `600 ${Math.max(8, H * 0.03)}px "Barlow Condensed", sans-serif`; cx.textAlign = 'center';
+  cx.font = `${8 * PX}px "Silkscreen", monospace`; cx.textAlign = 'center';
   [...SPOTS, CARGO_SPOT].forEach((x, i) => {
-    cx.fillRect(x * W - 0.5, G.twy * H, 1.2, (G.apr - G.twy) * H);
-    cx.fillRect((x - 0.02) * W, G.apr * H + 3, 0.04 * W, 1.5);
+    cx.fillRect(x * W - PX / 2, G.twy * H, PX, (G.apr - G.twy) * H);
+    cx.fillRect((x - 0.02) * W, G.apr * H + 3, 0.04 * W, PX);
     cx.fillText(i < SPOTS.length ? pad2(i + 1) : 'C1', x * W, (G.apr + 0.07) * H);
   });
   if (S.t < S.runway.closedUntil) {          // runway closed: craters and X markers
     cx.fillStyle = 'rgba(18,16,14,.85)';
     for (const f of S.fx) if (f.kind === 'smoke' && f.at === 'rwy') ell(f.x * W, G.rwy * H, W * 0.022, rh * 0.32);
-    cx.strokeStyle = 'rgba(245,210,70,.85)'; cx.lineWidth = 2;
+    cx.strokeStyle = 'rgba(245,210,70,.85)'; cx.lineWidth = PX;
     for (const x of [0.22, 0.6]) { cx.beginPath(); cx.moveTo(x * W - rh * 0.5, ry0 + 2); cx.lineTo(x * W + rh * 0.5, ry0 + rh - 2); cx.moveTo(x * W + rh * 0.5, ry0 + 2); cx.lineTo(x * W - rh * 0.5, ry0 + rh - 2); cx.stroke(); }
   }
   drawBaseExtras(L, k, now);
   if (night > 0.25) {
     const a = (night - 0.25) / 0.75;
-    for (let x = 0.01; x < 1; x += 0.04) { cx.fillStyle = `rgba(255,240,200,${0.85 * a})`; cx.fillRect(x * W, ry0 - 1, 2, 2); cx.fillRect(x * W, ry0 + rh - 1, 2, 2); }
-    for (let i = 0; i < 6; i++) { cx.fillStyle = `rgba(90,255,140,${a})`; cx.fillRect(0.972 * W, ry0 + rh * i / 5 - 1, 2, 2); cx.fillStyle = `rgba(255,70,60,${a})`; cx.fillRect(0.012 * W, ry0 + rh * i / 5 - 1, 2, 2); }
-    for (let x = 0.02; x < 1; x += 0.05) { cx.fillStyle = `rgba(80,140,255,${0.8 * a})`; cx.fillRect(x * W, ty0 - 1, 2, 2); cx.fillRect(x * W, ty0 + th, 2, 2); }
+    for (let x = 0.01; x < 1; x += 0.04) { cx.fillStyle = `rgba(255,240,200,${0.85 * a})`; cx.fillRect(x * W, ry0 - PX / 2, PX, PX); cx.fillRect(x * W, ry0 + rh - PX / 2, PX, PX); }
+    for (let i = 0; i < 6; i++) { cx.fillStyle = `rgba(90,255,140,${a})`; cx.fillRect(0.972 * W, ry0 + rh * i / 5 - PX / 2, PX, PX); cx.fillStyle = `rgba(255,70,60,${a})`; cx.fillRect(0.012 * W, ry0 + rh * i / 5 - PX / 2, PX, PX); }
+    for (let x = 0.02; x < 1; x += 0.05) { cx.fillStyle = `rgba(80,140,255,${0.8 * a})`; cx.fillRect(x * W, ty0 - PX, PX, PX); cx.fillRect(x * W, ty0 + th, PX, PX); }
     for (const x of [0.2, 0.5, 0.8]) {
       const pg = cx.createRadialGradient(x * W, 0.9 * H, 0, x * W, 0.9 * H, W * 0.16);
       pg.addColorStop(0, `rgba(255,214,150,${0.3 * a})`); pg.addColorStop(1, 'rgba(255,214,150,0)');
@@ -161,7 +162,7 @@ function drawAirfield(L, now) {
     }
   }
   for (const x of [0.2, 0.5, 0.8]) {         // light masts
-    cx.fillStyle = rgb(shade([90, 92, 92], k)); cx.fillRect(x * W - 1, 0.708 * H, 2, 0.06 * H);
-    cx.fillStyle = night > 0.25 ? 'rgba(255,230,180,.95)' : rgb(shade([150, 150, 146], k)); cx.fillRect(x * W - 4, 0.703 * H, 8, 3);
+    cx.fillStyle = rgb(shade([90, 92, 92], k)); cx.fillRect(x * W - PX / 2, 0.708 * H, PX, 0.06 * H);
+    cx.fillStyle = night > 0.25 ? 'rgba(255,230,180,.95)' : rgb(shade([150, 150, 146], k)); cx.fillRect(x * W - 2 * PX, 0.703 * H, 4 * PX, PX);
   }
 }

@@ -74,51 +74,51 @@ let TAC = { ox: 0, oy: 0, s: 1 };
 function drawTac(now) {
   const c = $('#tacmap'); if (!c) return;
   const r = c.getBoundingClientRect(); if (r.width < 20) return;
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const dpr = 0.5;   // printed-map look: half resolution, scaled up pixelated
   if (c.width !== Math.round(r.width * dpr) || c.height !== Math.round(r.height * dpr)) { c.width = Math.round(r.width * dpr); c.height = Math.round(r.height * dpr); }
   const g = c.getContext('2d'); g.setTransform(dpr, 0, 0, dpr, 0, 0);
   const w = r.width, h = r.height, ox = w / 2, oy = h / 2, s = (Math.min(w, h) / 2 - 16) / 300;
   TAC = { ox, oy, s };
   const P = (x, y) => [ox + x * s, oy + y * s];
-  g.fillStyle = '#071010'; g.fillRect(0, 0, w, h);
-  g.fillStyle = 'rgba(40,90,110,.22)'; g.beginPath(); COAST.forEach(([x, y], i) => { const p = P(x, y); i ? g.lineTo(...p) : g.moveTo(...p); }); g.lineTo(w + 10, h + 10); g.lineTo(w + 10, -10); g.closePath(); g.fill();
-  g.strokeStyle = 'rgba(98,203,215,.35)'; g.lineWidth = 1; g.beginPath(); COAST.forEach(([x, y], i) => { const p = P(x, y); i ? g.lineTo(...p) : g.moveTo(...p); }); g.stroke();
-  g.strokeStyle = 'rgba(98,203,215,.06)'; g.beginPath();
+  g.fillStyle = '#d3c7a2'; g.fillRect(0, 0, w, h);
+  g.fillStyle = 'rgba(45,60,71,.2)'; g.beginPath(); COAST.forEach(([x, y], i) => { const p = P(x, y); i ? g.lineTo(...p) : g.moveTo(...p); }); g.lineTo(w + 10, h + 10); g.lineTo(w + 10, -10); g.closePath(); g.fill();
+  g.strokeStyle = 'rgba(46,38,32,.75)'; g.lineWidth = 2; g.beginPath(); COAST.forEach(([x, y], i) => { const p = P(x, y); i ? g.lineTo(...p) : g.moveTo(...p); }); g.stroke();
+  g.strokeStyle = 'rgba(46,38,32,.12)'; g.beginPath();
   for (let v = -300; v <= 300; v += 50) { g.moveTo(...P(v, -400)); g.lineTo(...P(v, 400)); g.moveTo(...P(-400, v)); g.lineTo(...P(400, v)); }
   g.stroke();
-  g.font = '10px "IBM Plex Mono", monospace'; g.textAlign = 'left';
-  for (const rr of [100, 200, 300]) { g.strokeStyle = 'rgba(98,203,215,.2)'; g.beginPath(); g.arc(ox, oy, rr * s, 0, Math.PI * 2); g.stroke(); g.fillStyle = 'rgba(98,203,215,.45)'; g.fillText(`${rr} km`, ox + 4, oy - rr * s + 12); }
-  for (const [lbl, x, y] of [['N', 0, -1], ['E', 1, 0], ['S', 0, 1], ['W', -1, 0]]) { g.fillStyle = 'rgba(98,203,215,.55)'; g.textAlign = 'center'; g.fillText(lbl, ox + x * (300 * s + 9), oy + y * (300 * s + 9) + 4); }
+  g.font = '16px "Silkscreen", monospace'; g.textAlign = 'left';
+  for (const rr of [100, 200, 300]) { g.strokeStyle = 'rgba(46,38,32,.45)'; g.beginPath(); g.arc(ox, oy, rr * s, 0, Math.PI * 2); g.stroke(); g.fillStyle = 'rgba(46,38,32,.8)'; g.fillText(`${rr} km`, ox + 4, oy - rr * s + 12); }
+  for (const [lbl, x, y] of [['N', 0, -1], ['E', 1, 0], ['S', 0, 1], ['W', -1, 0]]) { g.fillStyle = '#2e2620'; g.textAlign = 'center'; g.fillText(lbl, ox + x * (300 * s + 9), oy + y * (300 * s + 9) + 4); }
   const sw = (now / 3000) % 1 * Math.PI * 2;
-  for (let i = 0; i < 24; i++) { const a = sw - i * 0.02; g.strokeStyle = `rgba(98,203,215,${0.18 * (1 - i / 24)})`; g.beginPath(); g.moveTo(ox, oy); g.lineTo(ox + Math.cos(a) * 300 * s, oy + Math.sin(a) * 300 * s); g.stroke(); }
+  for (let i = 0; i < 24; i++) { const a = sw - i * 0.02; g.strokeStyle = `rgba(122,46,31,${0.07 * (1 - i / 24)})`; g.beginPath(); g.moveTo(ox, oy); g.lineTo(ox + Math.cos(a) * 300 * s, oy + Math.sin(a) * 300 * s); g.stroke(); }
   g.textAlign = 'left';
   for (const m of S.missions) {
     if (!(m.status === 'open' || m.status === 'active') || m.type === 'INTERCEPT') continue;
     const [x, y] = P(m.x, m.y), sel = m.id === UI.selM;
-    if (m.sam) { g.strokeStyle = 'rgba(255,92,80,.35)'; g.setLineDash([3, 3]); g.beginPath(); g.arc(x, y, (8 + m.sam * 6) * s, 0, Math.PI * 2); g.stroke(); g.setLineDash([]); }
-    g.fillStyle = m.status === 'active' ? '#f0b44c' : 'rgba(240,180,76,.6)'; g.beginPath(); g.moveTo(x, y - 6); g.lineTo(x + 6, y); g.lineTo(x, y + 6); g.lineTo(x - 6, y); g.closePath(); g.fill();
-    if (sel) { g.strokeStyle = '#f0b44c'; g.strokeRect(x - 9, y - 9, 18, 18); }
-    g.fillStyle = '#f0b44c'; g.fillText(`${m.op} ${m.type}`, x + 9, y + 3);
+    if (m.sam) { g.strokeStyle = 'rgba(163,42,29,.5)'; g.setLineDash([3, 3]); g.beginPath(); g.arc(x, y, (8 + m.sam * 6) * s, 0, Math.PI * 2); g.stroke(); g.setLineDash([]); }
+    g.fillStyle = m.status === 'active' ? '#7a2e1f' : 'rgba(122,46,31,.6)'; g.beginPath(); g.moveTo(x, y - 6); g.lineTo(x + 6, y); g.lineTo(x, y + 6); g.lineTo(x - 6, y); g.closePath(); g.fill();
+    if (sel) { g.strokeStyle = '#7a2e1f'; g.strokeRect(x - 9, y - 9, 18, 18); }
+    g.fillStyle = '#7a2e1f'; g.fillText(`${m.op} ${m.type}`, x + 9, y + 3);
   }
   for (const rd of S.raids) {
     const [x, y] = P(rd.x, rd.y), a = Math.atan2(-rd.y, -rd.x);
-    g.strokeStyle = 'rgba(255,92,80,.4)'; g.setLineDash([2, 4]); g.beginPath(); g.moveTo(x, y); g.lineTo(ox, oy); g.stroke(); g.setLineDash([]);
-    g.save(); g.translate(x, y); g.rotate(a); g.fillStyle = '#ff5c50'; g.beginPath(); g.moveTo(8, 0); g.lineTo(-6, -6); g.lineTo(-2, 0); g.lineTo(-6, 6); g.closePath(); g.fill(); g.restore();
-    const m = MS(rd.mission); g.fillStyle = '#ff5c50'; g.fillText(`${rd.n}× BANDIT${m ? ' · ' + m.op : ''}`, x + 10, y - 6);
+    g.strokeStyle = 'rgba(163,42,29,.55)'; g.setLineDash([2, 4]); g.beginPath(); g.moveTo(x, y); g.lineTo(ox, oy); g.stroke(); g.setLineDash([]);
+    g.save(); g.translate(x, y); g.rotate(a); g.fillStyle = '#a32a1d'; g.beginPath(); g.moveTo(8, 0); g.lineTo(-6, -6); g.lineTo(-2, 0); g.lineTo(-6, 6); g.closePath(); g.fill(); g.restore();
+    const m = MS(rd.mission); g.fillStyle = '#a32a1d'; g.fillText(`${rd.n}× BANDIT${m ? ' · ' + m.op : ''}`, x + 10, y - 6);
   }
   for (const f of S.flights) {
     if (f.state === 'launch') continue;
     const [x, y] = P(f.x, f.y), sel = f.id === UI.selF;
-    g.fillStyle = 'rgba(98,203,215,.45)'; for (const [tx, ty] of f.trail) { const p = P(tx, ty); g.fillRect(p[0] - 1, p[1] - 1, 2, 2); }
+    g.fillStyle = 'rgba(36,80,110,.55)'; for (const [tx, ty] of f.trail) { const p = P(tx, ty); g.fillRect(p[0] - 1, p[1] - 1, 2, 2); }
     const tg = flightTarget(f);
-    if (tg) { g.strokeStyle = 'rgba(98,203,215,.35)'; g.setLineDash([4, 4]); g.beginPath(); g.moveTo(x, y); g.lineTo(...P(tg.x, tg.y)); g.stroke(); g.setLineDash([]); }
-    if (f.enemy) { g.fillStyle = '#ff5c50'; for (let i = 0; i < f.enemy.n; i++) g.fillRect(x + 12 + i * 6, y + 8, 4, 4); }
+    if (tg) { g.strokeStyle = 'rgba(36,80,110,.5)'; g.setLineDash([4, 4]); g.beginPath(); g.moveTo(x, y); g.lineTo(...P(tg.x, tg.y)); g.stroke(); g.setLineDash([]); }
+    if (f.enemy) { g.fillStyle = '#a32a1d'; for (let i = 0; i < f.enemy.n; i++) g.fillRect(x + 12 + i * 6, y + 8, 4, 4); }
     g.save(); g.translate(x, y); g.rotate(f.hdg);
-    g.fillStyle = isSupport(f) ? '#9fe3ec' : '#62cbd7'; g.beginPath(); g.moveTo(9, 0); g.lineTo(-6, -6); g.lineTo(-3, 0); g.lineTo(-6, 6); g.closePath(); g.fill(); g.restore();
-    if (sel) { g.strokeStyle = '#62cbd7'; g.beginPath(); g.arc(x, y, 13, 0, Math.PI * 2); g.stroke(); }
-    g.fillStyle = '#62cbd7'; g.fillText(`${f.call} · ${f.state === 'engaged' ? 'ENGAGED' : FSTATE[f.state]}`, x + 12, y - 6);
+    g.fillStyle = isSupport(f) ? '#4f7f96' : '#24506e'; g.beginPath(); g.moveTo(9, 0); g.lineTo(-6, -6); g.lineTo(-3, 0); g.lineTo(-6, 6); g.closePath(); g.fill(); g.restore();
+    if (sel) { g.strokeStyle = '#24506e'; g.beginPath(); g.arc(x, y, 13, 0, Math.PI * 2); g.stroke(); }
+    g.fillStyle = '#24506e'; g.fillText(`${f.call} · ${f.state === 'engaged' ? 'ENGAGED' : FSTATE[f.state]}`, x + 12, y - 6);
   }
-  g.fillStyle = '#d8e1dc'; g.fillRect(ox - 4, oy - 4, 8, 8); g.textAlign = 'right'; g.fillText('KESTREL', ox - 8, oy + 14); g.textAlign = 'left';
+  g.fillStyle = '#2e2620'; g.fillRect(ox - 4, oy - 4, 8, 8); g.textAlign = 'right'; g.fillText('KESTREL', ox - 8, oy + 14); g.textAlign = 'left';
 }
 function tacClick(e) {
   const c = e.target.getBoundingClientRect(), mx = e.clientX - c.left, my = e.clientY - c.top;
