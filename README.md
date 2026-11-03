@@ -2,6 +2,10 @@
 
 3D-Browser-Aufbau- und Managementspiel: Fliegerhorst ausbauen, Flugabwehr errichten, Personal führen, Maschinen in Einsätze schicken und andere Basen angreifen. Mit Accounts – der Spielstand liegt auf dem Server.
 
+## Zweiter Modus: Kestrel Field Ops
+
+Unter `/desk-ops/` liegt ein eigenständiges Ops-Desk-Spiel: Blick aus dem Bürofenster auf die Startbahn, Steuerung über das Basis-Terminal. Läuft ohne Account, Spielstand im Browser. Details in [`desk-ops/README.md`](desk-ops/README.md).
+
 ## Starten (lokal)
 
 ```bash
