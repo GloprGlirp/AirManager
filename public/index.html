@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <title>FLIGHTLINE – Airbase Command</title>
+  <meta name="theme-color" content="#0b0f12">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230b0f12'/%3E%3Cpath d='M16 4l3 10 9 4-9 2-3 8-3-8-9-2 9-4z' fill='%23ffb547'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Saira+Semi+Condensed:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+  <script type="importmap">{ "imports": { "three": "/vendor/three/build/three.module.js" } }</script>
+</head>
+<body>
+  <div id="view"></div>
+  <div id="labels"></div>
+  <div id="vignette"></div>
+
+  <!-- Spiel-HUD -->
+  <div id="hud" hidden>
+    <header id="topbar">
+      <div id="cmd" class="panel"></div>
+      <div id="resbar"></div>
+      <div id="sysbtns">
+        <button class="ibtn" data-act="panel" data-p="settings" title="Einstellungen"></button>
+      </div>
+    </header>
+    <div id="alert" hidden></div>
+    <aside id="ops"></aside>
+    <section id="sel" class="panel" hidden></section>
+    <div id="placebar" class="panel" hidden></div>
+    <nav id="dock"></nav>
+  </div>
+
+  <div id="modal" hidden><div class="sheet panel"></div></div>
+  <div id="toasts"></div>
+
+  <!-- Anmeldung -->
+  <div id="auth">
+    <div class="auth-brand">
+      <div class="mark">
+        <svg viewBox="0 0 64 64"><path d="M32 6l5 20 19 9-19 4-5 19-5-19-19-4 19-9z" fill="currentColor"/></svg>
+      </div>
+      <h1>FLIGHT<span>LINE</span></h1>
+      <p class="sub">Airbase Command</p>
+      <p class="lead">Baue deinen Fliegerhorst aus, führe Staffel und Bodenpersonal, schicke Maschinen in Einsätze – und halte die Flugabwehr bereit, wenn das Radar anschlägt.</p>
+      <ul class="feat">
+        <li>20 reale Flugzeuge &amp; Hubschrauber</li>
+        <li>17 Gebäude &amp; Abwehrsysteme</li>
+        <li>Luftangriffe, Einsätze &amp; Basis-Angriffe</li>
+      </ul>
+    </div>
+    <form id="authform" class="panel" autocomplete="on">
+      <div class="tabs">
+        <button type="button" class="tab on" data-mode="login">Anmelden</button>
+        <button type="button" class="tab" data-mode="register">Registrieren</button>
+      </div>
+      <label>Kennung<input name="username" autocomplete="username" maxlength="16" required placeholder="z. B. Falke01"></label>
+      <label>Passwort<input name="password" type="password" autocomplete="current-password" minlength="6" required placeholder="mind. 6 Zeichen"></label>
+      <label class="reg">Name deiner Basis<input name="baseName" maxlength="24" placeholder="Fliegerhorst Nordwind"></label>
+      <div class="err" id="autherr"></div>
+      <button class="btn primary big" type="submit"><span>Dienst antreten</span></button>
+      <p class="hint">Dein Spielstand wird auf dem Server gespeichert – melde dich von jedem Gerät aus an.</p>
+    </form>
+  </div>
+
+  <div id="loading"><div class="spin"></div><span>Lade Fliegerhorst …</span></div>
+  <script type="module" src="/js/main.js"></script>
+</body>
+</html>
