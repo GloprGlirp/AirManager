@@ -12,7 +12,7 @@ OUT=../../public/desk-ops/index.html
   echo '</head><body>'
   cat 02-body.html
   echo '<script>'
-  cat 03-data.js 04-sim-ground.js 05-sim-air.js 10-sim-base.js 13-campaign.js 06-scene-world.js 07-scene-actors.js 12-scene-base.js 14-pixel.js 08-ui-panels.js 11-audio.js 09-ui-main.js
+  cat 03-data.js 04-sim-ground.js 05-sim-air.js 10-sim-base.js 13-campaign.js 06-scene-world.js 07-scene-actors.js 12-scene-base.js 14-pixel.js 08-ui-panels.js 15-tutorial.js 11-audio.js 09-ui-main.js
   echo '</script></body></html>'
 } > "$OUT"
 echo "gebaut: public/desk-ops/index.html"

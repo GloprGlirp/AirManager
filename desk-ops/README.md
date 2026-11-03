@@ -14,6 +14,7 @@ Leertaste pausiert, Tasten 1–4 ändern das Tempo.
 
 ## Was drin ist
 
+- **Tutorial:** Schritt-für-Schritt-Einführung beim ersten Start, danach geht die Kampagne weiter. Der Help-Knopf oben startet es jederzeit neu.
 - **Kampagne:** Früh-, Spät- und Nachtschicht (je 8 Spielstunden) mit 3 Zielen pro Schicht, Schichtbericht, XP und Beförderungen vom Second Lieutenant bis zum Brigadier General. Flugzeuge, Ausbauten und Ausbildung werden mit dem Rang freigeschaltet. Daneben gibt es **Free Play** mit allem freigeschaltet.
 - **Fenster:** Jets rollen, starten mit Nachbrenner und landen; C-130 bringt Nachschub; Tag/Nacht, Wetter, Luftangriffe mit Rauch und Kratern; Hangars und Kran beim Bau; Patriot- und Avenger-Starts.
 - **Tasking:** CAP, Strike, Recon und Intercept mit Taktik (Aggression, Formation, ROE, Flughöhe).
@@ -40,6 +41,7 @@ Der Code liegt in Teilen unter `src/`, `build.sh` setzt daraus `public/desk-ops/
 | `14-pixel.js` | Pixel-Look: Palette und Dithering der Fensteransicht |
 | `08-ui-panels.js`, `09-ui-main.js` | Terminal, Tac Map, Eingabe, Hauptschleife |
 | `11-audio.js` | Sound |
+| `15-tutorial.js` | Tutorial mit markierten Knöpfen |
 
 Nach Änderungen in `src/`:
 
