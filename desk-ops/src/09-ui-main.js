@@ -12,28 +12,39 @@ function updateTop() {
   const closed = S.t < S.runway.closedUntil; const rs = $('#rwystate');
   rs.textContent = closed ? 'Runway closed' : S.runway.busy ? 'Runway occupied' : 'Runway open';
   rs.style.color = closed ? 'var(--crit)' : '';
+  const camp = isCampaign();
+  $('#rankstat').hidden = !camp; $('#shiftstat').hidden = !(camp && S.shift);
+  if (camp) {
+    $('#rankname').textContent = CAREER[rankIdx()].short; $('#xpline').textContent = `Rank · ${S.xp} XP`;
+    if (S.shift) { $('#shiftleft').textContent = S.debrief ? 'Shift over' : fmtDur(S.shift.end - S.t); $('#shiftname').textContent = `${S.shift.name} ${S.shift.n} left`; }
+  }
 }
 function renderTabs() {
   const open = S.missions.filter(m => m.status === 'open'), urgent = open.some(m => m.type === 'INTERCEPT');
   const badge = { missions: open.length ? `<i class="${urgent ? '' : 'n'}">${open.length}</i>` : '', tac: S.flights.length ? `<i class="n">${S.flights.length}</i>` : '' };
-  const html = TABS.map(([k, l]) => `<button class="tab${UI.tab === k ? ' on' : ''}" data-act="tab" data-tab="${k}" aria-current="${UI.tab === k}">${l}${badge[k] || ''}</button>`).join('');
+  if (UI.tab === 'career' && !isCampaign()) UI.tab = 'missions';
+  const tabs = isCampaign() ? [TABS[0], ['career', 'Career'], ...TABS.slice(1)] : TABS;
+  const html = tabs.map(([k, l]) => `<button class="tab${UI.tab === k ? ' on' : ''}" data-act="tab" data-tab="${k}" aria-current="${UI.tab === k}">${l}${badge[k] || ''}</button>`).join('');
   if (html !== lastTabs) { $('#tabs').innerHTML = html; lastTabs = html; }
 }
 function overlayHTML() {
   if (S.over) return `<div class="brief" role="dialog" aria-labelledby="ovt"><p class="h">Message from wing command</p><h1 id="ovt">Relieved of command</h1>
     <p>Your command rating reached zero on ${fmtT(S.t)}. A new duty officer is taking over Kestrel Field.</p>
-    <ul><li><b>${S.stats.won}</b> operations completed, <b>${S.stats.failed}</b> failed</li><li><b>${S.stats.kills}</b> enemy aircraft destroyed</li><li><b>${S.stats.lost}</b> jets lost, <b>${S.stats.sorties}</b> sorties flown</li></ul>
-    <div class="acts"><button class="btn go big" data-act="new">Start a new shift</button></div></div>`;
-  if (S.started) return '';
-  return `<div class="brief" role="dialog" aria-labelledby="ovt"><p class="h">Shift briefing · Kestrel Field</p><h1 id="ovt">You have the ops desk</h1>
+    <ul>${isCampaign() ? `<li>Final rank <b>${CAREER[rankIdx()].name}</b> with ${S.xp} XP after <b>${S.shiftsDone}</b> shifts</li>` : ''}<li><b>${S.stats.won}</b> operations completed, <b>${S.stats.failed}</b> failed</li><li><b>${S.stats.kills}</b> enemy aircraft destroyed</li><li><b>${S.stats.lost}</b> jets lost, <b>${S.stats.sorties}</b> sorties flown</li></ul>
+    <div class="acts"><button class="btn go big" data-act="new">Start again</button></div></div>`;
+  if (S.started) return S.debrief ? debriefHTML() : '';
+  const intro = `<p class="h">Shift briefing · Kestrel Field</p><h1 id="ovt">You have the ops desk</h1>
     <p>Out the window is runway 27 and the ramp. On the terminal is everything that keeps it working. Order fuel and munitions, turn jets around, and send flights on tasking.</p>
     <ul><li><b>Tasking</b> pays the budget. Ignored or failed operations cost command rating.</li>
-      <li><b>Flightline</b>: refuel, arm and repair. Three ground crews work at a time.</li>
-      <li><b>Supply</b> comes in by C-130. Order before you run dry.</li>
+      <li><b>Flightline</b>: refuel, arm and repair. <b>Supply</b> comes in by C-130.</li>
+      <li><b>Base</b>: build hangars and air defences, train crews, buy aircraft.</li>
       <li><b>Tac map</b>: follow flights, change tactics in the air, send them to the tanker or home.</li>
       <li>Raids that reach the base burn fuel and crater the runway. Intercept them.</li></ul>
-    <p class="muted">Space pauses, keys 1 to 4 set speed. Progress is saved in this browser.</p>
-    <div class="acts">${UI.resume ? `<button class="btn go big" data-act="resume">Resume shift · ${fmtT(S.t)}</button><button class="btn" data-act="new">Start a new shift</button>` : `<button class="btn go big" data-act="start">Start shift</button>`}</div></div>`;
+    <p class="muted">Space pauses, keys 1 to 4 set speed. Progress is saved in this browser.</p>`;
+  if (UI.resume) return `<div class="brief" role="dialog" aria-labelledby="ovt">${intro}<div class="acts"><button class="btn go big" data-act="resume">Resume ${isCampaign() ? 'campaign' : 'free play'} · ${fmtT(S.t)}</button><button class="btn" data-act="new">New game</button></div></div>`;
+  return `<div class="brief" role="dialog" aria-labelledby="ovt">${intro}<div class="modes">
+    <button class="mode go" data-act="campaign"><b>Campaign</b><span>Work 8-hour shifts with three objectives each. Earn XP, get promoted and unlock new aircraft, base upgrades and training.</span></button>
+    <button class="mode" data-act="free"><b>Free play</b><span>No shifts and no ranks. Every aircraft and upgrade is available from the start.</span></button></div></div>`;
 }
 function renderUI(force) {
   if (!S) return;
@@ -51,7 +62,7 @@ function renderUI(force) {
     const html = tacSideHTML();
     if (html !== UI.lastSide) { $('#tacside').innerHTML = html; UI.lastSide = html; }
   } else {
-    const html = { supply: supplyHTML, flightline: flightlineHTML, missions: missionsHTML, base: baseHTML, log: logHTML }[UI.tab]();
+    const html = { supply: supplyHTML, flightline: flightlineHTML, missions: missionsHTML, base: baseHTML, career: careerHTML, log: logHTML }[UI.tab]();
     if (html !== UI.lastHTML) { panel.innerHTML = html; UI.lastHTML = html; }
   }
   if (changed) { panel.scrollTop = 0; UI.lastTab = UI.tab; }
@@ -121,7 +132,13 @@ function tacClick(e) {
 }
 
 // ---------- Input ----------
-function startShift() { S.started = true; UI.resume = false; if (!S.missions.length) { genMission('CAP'); log('Shift start. Viper 1-3 needs fuel and weapons, Viper 1-4 needs repairs.'); } }
+function beginGame(mode) {
+  clearSave(); S = newGame(mode); S.started = true;
+  UI.resume = false; UI.selM = null; UI.selF = null; UI.pick.clear(); UI.tab = 'missions';
+  genMission('CAP');
+  log('Shift start. Viper 1-3 needs fuel and weapons, Viper 1-4 needs repairs.');
+  if (mode === 'campaign') beginShift();
+}
 function doAct(d) {
   const a = d.id ? AC(d.id) : null, f = d.f ? FL(d.f) : null;
   switch (d.act) {
@@ -152,9 +169,10 @@ function doAct(d) {
     case 'rtb': if (f) goRTB(f, 'ordered home'); break;
     case 'tank': if (f) orderTanker(f); break;
     case 'maps': UI.tab = 'tac'; UI.selF = d.f; break;
-    case 'start': startShift(); break;
+    case 'campaign': case 'free': beginGame(d.act); break;
+    case 'nextshift': beginShift(); break;
     case 'resume': S.started = true; UI.resume = false; break;
-    case 'new': clearSave(); S = newGame(); UI.selM = null; UI.selF = null; UI.pick.clear(); UI.tab = 'missions'; startShift(); break;
+    case 'new': clearSave(); S = newGame(); UI.resume = false; UI.selM = null; UI.selF = null; UI.pick.clear(); UI.tab = 'missions'; break;
   }
 }
 document.addEventListener('pointerdown', e => { if (e.target.closest('#panel')) UI.down = true; });
@@ -176,7 +194,7 @@ document.addEventListener('keydown', e => {
 let lastNow = performance.now(), uiAcc = 0, saveAcc = 0;
 function frame(now) {
   const dtR = Math.min(0.1, Math.max(0, (now - lastNow) / 1000)); lastNow = now;
-  if (S.started && !S.over) { let g = dtR * SPEEDS[S.speed]; while (g > 1e-6) { const st = Math.min(0.25, g); step(st); g -= st; } }
+  if (S.started && !S.over && !S.debrief) { let g = dtR * SPEEDS[S.speed]; while (g > 1e-6 && !S.debrief && !S.over) { const st = Math.min(0.25, g); step(st); g -= st; } }
   drawScene(now, dtR);
   audioFrame();
   if (UI.tab === 'tac') drawTac(now);

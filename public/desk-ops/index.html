@@ -165,7 +165,8 @@ body{background:var(--wall);color:var(--ink);font-family:var(--f-ui);font-size:1
 .log time{color:var(--muted);font-variant-numeric:tabular-nums}
 .log .radio{color:var(--cyan)}.log .warn{color:var(--warn)}.log .crit{color:var(--crit)}.log .good{color:var(--ok)}
 /* overlay */
-.overlay{position:absolute;inset:0;background:rgba(4,9,9,.92);display:flex;align-items:center;justify-content:center;padding:16px;z-index:5;overflow:auto}
+.overlay{position:absolute;inset:0;background:rgba(4,9,9,.92);display:flex;align-items:flex-start;justify-content:center;padding:16px;z-index:5;overflow:auto}
+.overlay > .brief{margin:auto}
 .brief{max-width:600px;border:1px solid var(--amber-dim);padding:22px 24px;display:flex;flex-direction:column;gap:12px;background:var(--screen)}
 .brief h1{font-family:var(--f-disp);font-size:44px;font-weight:400;color:var(--amber);margin:0;line-height:.85;text-wrap:balance}
 .brief p{margin:0;line-height:1.55;max-width:62ch}
@@ -176,6 +177,24 @@ body{background:var(--wall);color:var(--ink);font-family:var(--f-ui);font-size:1
 .prog{height:6px;margin-top:6px;max-width:420px;background:rgba(255,255,255,.05);border:1px solid var(--rule);position:relative}.prog i{position:absolute;top:0;bottom:0;left:0;background:var(--cyan)}
 .stats3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}.stats3 b{display:block;color:var(--ink);font-weight:500;text-transform:none;letter-spacing:0;font-size:12px}
 .panel > p{margin:0}
+.objs{display:flex;flex-direction:column;gap:6px}
+.objs div{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px dashed var(--rule);padding-bottom:5px}
+.xp{display:flex;flex-direction:column;gap:2px;max-width:520px}
+.xp .prog{max-width:none}
+.xpl{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;align-items:baseline}
+.xpl b{font-family:var(--f-disp);font-size:26px;font-weight:400;color:var(--amber);line-height:1}
+.xpl span{color:var(--muted);font-size:11.5px}
+.ladder{display:flex;flex-direction:column;gap:4px}
+.rk{display:grid;grid-template-columns:210px minmax(0,1fr);gap:4px 12px;padding:7px 10px;border:1px solid var(--rule);font-size:12px;color:var(--muted);align-items:center}
+.rk b{display:block;font-weight:500}.rk small{font-size:10.5px}
+.rk.got b{color:var(--ok)}.rk.got{color:var(--ink)}.rk.cur{border-color:var(--amber);background:rgba(240,180,76,.05)}
+.modes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.mode{font:inherit;color:inherit;text-align:left;background:transparent;border:1px solid var(--rule);padding:12px;cursor:pointer;display:flex;flex-direction:column;gap:5px;border-radius:2px}
+.mode:hover{border-color:var(--amber)}
+.mode b{font-family:var(--f-label);font-size:18px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--amber)}
+.mode span{color:var(--muted);font-size:12px;line-height:1.45}
+.mode.go b{color:var(--ok)}
+@media (max-width:820px){.rk{grid-template-columns:1fr}.modes{grid-template-columns:1fr}}
 @media (max-width:1000px){.props{display:none}}
 @media (max-width:820px){
   .room{grid-template-rows:minmax(120px,30%) minmax(0,1fr)}
@@ -213,6 +232,8 @@ body{background:var(--wall);color:var(--ink);font-family:var(--f-ui);font-size:1
           <div class="stat"><b id="funds">$2.40M</b><span>Budget</span></div>
           <div class="stat"><b id="rep">60</b><span>Command rating</span></div>
           <div class="stat"><b id="alert" class="ok">GREEN</b><span>Air threat</span></div>
+          <div class="stat" id="shiftstat" hidden><b id="shiftleft">8h 00m</b><span id="shiftname">Day shift 1</span></div>
+          <div class="stat" id="rankstat" hidden><b id="rankname">2nd Lt</b><span id="xpline">0 XP</span></div>
           <div class="speed" role="group" aria-label="Game speed" id="speed"></div>
         </header>
         <nav class="tabs" id="tabs" aria-label="Terminal sections"></nav>
@@ -384,8 +405,9 @@ function newFleet() {
     return a;
   });
 }
-function newGame() {
-  return { v: 2, t: 6 * 60 + 40, funds: 2400, rep: 60, speed: 1, started: false, over: false,
+function newGame(mode = 'free') {
+  return { v: 2, mode, xp: 0, shiftsDone: 0, stars: 0, shift: null, debrief: null,
+    t: mode === 'campaign' ? 6 * 60 : 6 * 60 + 40, funds: 2400, rep: 60, speed: 1, started: false, over: false,
     crews: 3, base: { hangar: 0, patriot: 0, shorad: 0, fuelfarm: 0, bunker: 0, quarters: 0 }, build: null, training: null, pilots: [],
     res: { fuel: 360, aim120: 14, aim9: 18, agm65: 8, gbu12: 10, gun: 6000, chaff: 520, flare: 480, parts: 16, pac3: 0, stinger: 0 },
     fleet: newFleet(), missions: [], flights: [], raids: [], deliveries: [], cargo: [], fx: [],
@@ -423,6 +445,7 @@ function migrate(o) {
     o.res.pac3 = 0; o.res.stinger = 0;
     o.fleet.forEach((a, i) => { a.slot = SPOTS.includes(a.spot) ? SPOTS.indexOf(a.spot) : i; delete a.spot; });
   }
+  if (!o.mode) Object.assign(o, { mode: 'free', xp: 0, shiftsDone: 0, stars: 0, shift: null, debrief: null });
   return o;
 }
 function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignore */ } }
@@ -679,7 +702,8 @@ function goRTB(f, why) {
 function missionWin(m, f) {
   closeMission(m, 'done');
   S.funds += m.reward; S.rep = Math.min(100, S.rep + m.rep); S.stats.won++;
-  log(`Op. ${m.op} complete. ${money(m.reward)} added to the budget, rating +${m.rep}.`, 'good');
+  log(`Op. ${m.op} complete. ${money(m.reward)} added to the budget, rating +${m.rep}${isCampaign() ? `, +${20 + m.threat * 10} XP` : ''}.`, 'good');
+  addXP(20 + m.threat * 10);
   if (f) goRTB(f, 'mission complete');
 }
 function missionFail(m, why) {
@@ -728,7 +752,7 @@ function airCombat(f, en, dt) {
       const s = shoot(a, f, en.skill);
       if (s) {
         radio(`${a.call}: ${s.call}.`);
-        if (s.hit) { en.n--; S.stats.kills++; radio(`${a.call}: splash one${en.n ? '' : ', picture clean'}.`); }
+        if (s.hit) { en.n--; S.stats.kills++; addXP(4); radio(`${a.call}: splash one${en.n ? '' : ', picture clean'}.`); }
       }
     }
   }
@@ -892,9 +916,11 @@ function raidDestroyedByBase(r) {
   const pay = Math.round(m.reward / 2);
   S.funds += pay; S.rep = Math.min(100, S.rep + m.rep); S.stats.won++;
   log(`Op. ${m.op}: raid wiped out by base air defences. ${money(pay)} bonus, rating +${m.rep}.`, 'good');
+  addXP(10 + m.threat * 5);
   if (f) goRTB(f, 'raid destroyed');
 }
 function baseAttack(r) {
+  if (S.shift) S.shift.raidsHit++;
   const sev = clamp(r.n / (r.n0 || r.n), 0.3, 1);
   const fuelLoss = Math.round(S.res.fuel * rnd(0.15, 0.3) * sev);
   S.res.fuel -= fuelLoss;
@@ -961,7 +987,7 @@ function step(dt) {
   tickBase(dt);
   for (const m of S.missions) {
     if (m.status === 'open' && m.expires && S.t >= m.expires) {
-      closeMission(m, 'expired'); S.rep = Math.max(0, S.rep - 3); log(`Op. ${m.op} expired unflown. Rating −3.`, 'warn');
+      closeMission(m, 'expired'); S.rep = Math.max(0, S.rep - 3); S.stats.expired = (S.stats.expired || 0) + 1; log(`Op. ${m.op} expired unflown. Rating −3.`, 'warn');
     }
   }
   S.missions = S.missions.filter(m => m.status === 'open' || m.status === 'active' || S.t - m.closedAt < 45);
@@ -970,15 +996,17 @@ function step(dt) {
     S.nextMission = S.t + rnd(28, 55) - Math.min(15, Math.floor(S.t / 1440) * 3);
   }
   const di = Math.floor((S.t - 360) / 1440);
-  if (di > S.budgetDay) { S.budgetDay = di; const amt = 700 + S.rep * 6; S.funds += amt; log(`06:00 budget allocation: ${money(amt)}.`, 'good'); }
+  if (di > S.budgetDay) { S.budgetDay = di; const amt = Math.round((700 + S.rep * 6) * budgetMul()); S.funds += amt; log(`06:00 budget allocation: ${money(amt)}.`, 'good'); }
   if (S.t >= S.wx.until) newWeather();
   S.fx = S.fx.filter(x => S.t - x.born < x.life);
+  if (isCampaign() && S.shift && !S.debrief && !S.over && S.t >= S.shift.end) endShift();
   if (S.rep <= 0 && !S.over) { S.over = true; log('Command rating reached zero. You have been relieved of command.', 'crit'); }
 }
 // ---------- Base development, training, procurement ----------
 function buildBlock(k) {
   const U = UPGRADES[k];
   if (S.base[k] >= U.max) return 'Fully built';
+  const lk = lockReason('up:' + k); if (lk) return lk;
   if (S.build) return 'Engineers busy';
   if (S.funds < U.cost) return 'No budget';
   return null;
@@ -991,6 +1019,7 @@ function startBuild(k) {
   log(`Engineers started work: ${U.name} ${S.base[k] + 1}. Ready in ${fmtDur(U.time)}.`);
 }
 function trainBlock(kind) {
+  const lk = lockReason('train:' + kind); if (lk) return lk;
   if (S.training) return 'Instructors busy';
   if (kind === 'crew' && S.crews >= CREW_MAX) return 'Crew limit reached';
   if (kind === 'pilot' && S.pilots.length >= PILOT_MAX) return 'Pilot pool full';
@@ -1014,6 +1043,7 @@ function swapPilot(a) {
   a.pilot = best.name; a.fatigue = best.fatigue;
 }
 function buyBlock(type) {
+  const lk = lockReason('type:' + type); if (lk) return lk;
   if (freeSlot(type) < 0) return 'No parking, build a hangar';
   if (S.funds < TYPES[type].price) return 'No budget';
   return null;
@@ -1054,6 +1084,117 @@ function tickBase(dt) {
     S.training = null;
     startTasks();
   }
+}
+// ---------- Campaign: 8-hour shifts, objectives, XP, ranks, unlocks ----------
+const CAREER = [
+  { name: 'Second Lieutenant',  short: '2nd Lt',   xp: 0,    unlocks: ['type:F-16C', 'type:KC-135R', 'up:hangar', 'up:fuelfarm'] },
+  { name: 'First Lieutenant',   short: '1st Lt',   xp: 400,  unlocks: ['train:crew', 'up:shorad', 'up:bunker', 'type:F-15E'] },
+  { name: 'Captain',            short: 'Capt',     xp: 1100,  unlocks: ['type:F/A-18E', 'train:pilot', 'up:quarters'] },
+  { name: 'Major',              short: 'Maj',      xp: 2100, unlocks: ['type:A-10C', 'up:patriot'] },
+  { name: 'Lieutenant Colonel', short: 'Lt Col',   xp: 3500, unlocks: ['type:E-3G'] },
+  { name: 'Colonel',            short: 'Col',      xp: 5300, unlocks: ['type:F-35A'] },
+  { name: 'Brigadier General',  short: 'Brig Gen', xp: 7500, unlocks: ['perk:budget'] },
+];
+const SHIFT_LEN = 480;
+const SHIFT_NAMES = { 6: 'Day shift', 14: 'Swing shift', 22: 'Night shift' };
+const OBJ_POOL = ['nolost', 'noraid', 'fuel', 'kills', 'sorties', 'rating', 'nofail'];
+const isCampaign = () => S.mode === 'campaign';
+function rankIdx(xp = S.xp || 0) { let r = 0; CAREER.forEach((c, i) => { if (xp >= c.xp) r = i; }); return r; }
+function unlockName(key) {
+  const [k, v] = key.split(':');
+  if (k === 'type') return v;
+  if (k === 'up') return UPGRADES[v].name;
+  if (k === 'train') return v === 'crew' ? 'Ground crew training' : 'Pilot training';
+  return 'Daily budget +50%';
+}
+function lockReason(key) {
+  if (!isCampaign()) return null;
+  const i = CAREER.findIndex(c => c.unlocks.includes(key));
+  return i > rankIdx() ? `Unlocks at ${CAREER[i].name}` : null;
+}
+function budgetMul() { if (!isCampaign()) return 1; const r = rankIdx(); return 1 + 0.08 * r + (r >= 6 ? 0.5 : 0); }
+function addXP(n) {
+  if (!isCampaign() || !n) return;
+  const before = rankIdx();
+  S.xp += Math.round(n);
+  for (let r = before + 1; r <= rankIdx(); r++) {
+    S.funds += 500;
+    log(`PROMOTED to ${CAREER[r].name}. Unlocked: ${CAREER[r].unlocks.map(unlockName).join(', ')}. $500K command bonus.`, 'good');
+  }
+}
+
+function mkObjective(id, n) {
+  if (id === 'ops') return { id, n: Math.min(5, 2 + Math.floor(n / 3)) };
+  if (id === 'fuel') return { id, n: Math.min(Math.round(capOf('fuel') * 0.45 / 10) * 10, 150 + 25 * Math.min(n, 8)) };
+  if (id === 'kills') return { id, n: 2 + Math.floor(n / 2) };
+  if (id === 'sorties') return { id, n: 4 + n };
+  return { id };
+}
+function objText(o) {
+  return { ops: `Complete ${o.n} operations`, nolost: 'Lose no aircraft', noraid: 'Keep every raid off the base',
+    fuel: `End the shift with at least ${o.n} kL of fuel`, kills: `Shoot down ${o.n} enemy aircraft`, sorties: `Fly ${o.n} sorties`,
+    rating: 'End with a higher command rating than you started', nofail: 'No failed or expired operations' }[o.id];
+}
+function objState(o) {
+  const sh = S.shift, d = k => (S.stats[k] || 0) - (sh.s0[k] || 0);
+  const count = (v, n) => ({ done: v >= n, label: `${Math.min(v, n)} / ${n}` });
+  switch (o.id) {
+    case 'ops': return count(d('won'), o.n);
+    case 'kills': return count(d('kills'), o.n);
+    case 'sorties': return count(d('sorties'), o.n);
+    case 'nolost': { const v = d('lost'); return { done: !v, failed: v > 0, label: v ? `${v} lost` : 'On track' }; }
+    case 'noraid': return { done: !sh.raidsHit, failed: sh.raidsHit > 0, label: sh.raidsHit ? `${sh.raidsHit} hit the base` : 'On track' };
+    case 'nofail': { const v = d('failed') + d('expired'); return { done: !v, failed: v > 0, label: v ? `${v} failed` : 'On track' }; }
+    case 'fuel': return { done: S.res.fuel >= o.n, label: `${Math.round(S.res.fuel)} / ${o.n} kL` };
+    case 'rating': return { done: S.rep > sh.rep0, label: `${Math.round(S.rep)} vs ${Math.round(sh.rep0)}` };
+  }
+  return { done: false, label: '' };
+}
+function shiftName(t) { return SHIFT_NAMES[Math.round(hourOf(t)) % 24] || 'Shift'; }
+function beginShift() {
+  const n = (S.shiftsDone || 0) + 1, pool = OBJ_POOL.slice(), picks = [];
+  while (picks.length < 2) picks.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+  S.shift = { n, name: shiftName(S.t), start: S.t, end: S.t + SHIFT_LEN, s0: { ...S.stats }, rep0: S.rep, xp0: S.xp, raidsHit: 0,
+    objectives: [mkObjective('ops', n), ...picks.map(id => mkObjective(id, n))] };
+  S.debrief = null;
+  log(`${S.shift.name} ${n} begins. Objectives: ${S.shift.objectives.map(objText).join('; ')}.`);
+}
+function endShift() {
+  const sh = S.shift, res = sh.objectives.map(o => objState(o).done), met = res.filter(Boolean).length;
+  const missionXP = S.xp - sh.xp0, xp = 60 + met * 40 + (met === res.length ? 40 : 0), cash = met * 150, r0 = rankIdx();
+  const d = k => (S.stats[k] || 0) - (sh.s0[k] || 0);
+  S.funds += cash; S.shiftsDone = sh.n; S.stars = (S.stars || 0) + met;
+  addXP(xp);
+  S.debrief = { n: sh.n, name: sh.name, objectives: sh.objectives.map((o, i) => ({ text: objText(o), done: res[i] })), met, xp, missionXP, cash, r0, r1: rankIdx(),
+    won: d('won'), kills: d('kills'), lost: d('lost'), raids: sh.raidsHit };
+  log(`${sh.name} ${sh.n} complete: ${met} of ${res.length} objectives, +${xp + missionXP} XP.`, 'good');
+}
+
+// ---------- Campaign screens ----------
+function xpBar() {
+  const r = rankIdx(), cur = CAREER[r], nxt = CAREER[r + 1];
+  const p = nxt ? (S.xp - cur.xp) / (nxt.xp - cur.xp) : 1;
+  return `<div class="xp"><div class="xpl"><b>${cur.name}</b><span>${S.xp} XP${nxt ? ` · ${nxt.xp - S.xp} to ${nxt.name}` : ' · highest rank'}</span></div>${progBar(p)}</div>`;
+}
+function debriefHTML() {
+  const d = S.debrief, promo = d.r1 > d.r0;
+  const unlocked = CAREER.slice(d.r0 + 1, d.r1 + 1).flatMap(c => c.unlocks).map(unlockName).join(', ');
+  return `<div class="brief" role="dialog" aria-labelledby="ovt"><p class="h">Shift report · ${d.name} ${d.n}</p>
+    <h1 id="ovt">${d.met === d.objectives.length ? 'Clean shift' : `${d.met} of ${d.objectives.length} objectives`}</h1>
+    <div class="objs">${d.objectives.map(o => `<div><span>${o.text}</span><span class="chip ${o.done ? 'ok' : 'crit'}">${o.done ? 'Done' : 'Missed'}</span></div>`).join('')}</div>
+    <p class="muted">${d.won} operations completed · ${d.kills} kills · ${d.lost} jets lost · ${d.raids} raids on the base</p>
+    <p>+${d.missionXP} XP from operations, +${d.xp} XP for the shift${d.cash ? `, ${money(d.cash)} budget bonus` : ''}.</p>
+    ${promo ? `<p class="okc">Promoted to ${CAREER[d.r1].name}. Unlocked: ${unlocked}.</p>` : ''}
+    ${xpBar()}
+    <div class="acts"><button class="btn go big" data-act="nextshift">Start ${shiftName(S.t)} ${d.n + 1}</button></div></div>`;
+}
+function careerHTML() {
+  const sh = S.shift, r = rankIdx();
+  const objs = sh ? sh.objectives.map(o => { const st = objState(o); return `<div><span>${objText(o)}</span><span class="chip ${st.done ? 'ok' : st.failed ? 'crit' : 'idle'}">${st.label}</span></div>`; }).join('') : '';
+  const ladder = CAREER.map((c, i) => `<div class="rk${i <= r ? ' got' : ''}${i === r ? ' cur' : ''}"><div><b>${c.name}</b><small>${c.xp.toLocaleString('en-US')} XP</small></div><span>${c.unlocks.map(unlockName).join(' · ')}</span></div>`).join('');
+  return `<div class="secH"><h2>Career</h2><p>${S.shiftsDone || 0} shifts served · ${S.stars || 0} objectives met</p></div>${xpBar()}
+    ${sh ? `<div class="secH" style="margin-top:18px"><h2>${sh.name} ${sh.n}</h2><p>Ends ${fmtClock(sh.end)}, in ${fmtDur(sh.end - S.t)}. Each objective met: +40 XP and ${money(150)}.</p></div><div class="objs">${objs}</div>` : ''}
+    <div class="secH" style="margin-top:18px"><h2>Ranks and unlocks</h2><p>XP comes from operations, kills and shift objectives.</p></div><div class="ladder">${ladder}</div>`;
 }
 // ---------- Window view: sky, scenery, airfield ----------
 const cv = $('#outside'), cx = cv.getContext('2d');
@@ -1603,7 +1744,7 @@ function supplyHTML() {
       <dt>Ground crews</dt><dd>${crewsBusy()} of ${S.crews} working</dd>
       <dt>Air defence</dt><dd>${S.base.patriot || S.base.shorad ? `${S.base.patriot} Patriot, ${S.base.shorad} Avenger` : 'None. Build it on the Base tab.'}</dd>
       <dt>Weather</dt><dd>${WX_NAME[S.wx.kind]}, ${S.wx.wind}° / ${S.wx.kt} kt</dd>
-      <dt>Next budget</dt><dd>06:00, about ${money(700 + S.rep * 6)}</dd>
+      <dt>Next budget</dt><dd>06:00, about ${money((700 + S.rep * 6) * budgetMul())}</dd>
       <dt>Record</dt><dd>${S.stats.won} won · ${S.stats.failed} failed · ${S.stats.kills} kills · ${S.stats.lost} jets lost</dd>
     </dl></div>
   </div>`;
@@ -1730,7 +1871,7 @@ function baseHTML() {
   const ups = Object.entries(UPGRADES).map(([k, U]) => {
     const blk = buildBlock(k), n = S.base[k];
     const btn = n >= U.max ? '<span class="muted">Fully built</span>' : `<button class="btn go" data-act="build" data-k="${k}" ${blk ? 'disabled' : ''}>Build · ${money(U.cost)} · ${fmtDur(U.time)}</button>`;
-    return `<article class="ac">${cardHead(U.name, lvlPips(n, U.max))}<div class="sub">${U.note}</div><div class="acts">${btn}${blk === 'No budget' ? '<span class="warnc">Not enough budget</span>' : ''}</div></article>`;
+    return `<article class="ac">${cardHead(U.name, lvlPips(n, U.max))}<div class="sub">${U.note}</div><div class="acts">${btn}${blk && blk !== 'Engineers busy' ? `<span class="warnc">${blk === 'No budget' ? 'Not enough budget' : blk}</span>` : ''}</div></article>`;
   }).join('');
   const tStatus = tr
     ? `<p>Training ${tr.kind === 'crew' ? 'a ground crew' : 'a pilot'}. Qualified ${fmtClock(tr.done)}, in ${fmtDur(tr.done - S.t)}.</p>${progBar((S.t - tr.start) / (tr.done - tr.start))}`
@@ -1741,9 +1882,9 @@ function baseHTML() {
     : '<div><span class="muted">No spare pilots yet. Tired pilots keep flying.</span></div>';
   const people = `<div class="grid">
     <article class="ac">${cardHead('Ground crews', `<span class="chip ok">${S.crews} of ${CREW_MAX}</span>`)}<div class="sub">Each crew refuels, arms or repairs one jet at a time. ${crewsBusy()} working now.</div>
-      <div class="acts"><button class="btn go" data-act="train" data-k="crew" ${cb ? 'disabled' : ''}>Train crew · ${money(CREW_COST)} · ${fmtDur(CREW_TIME)}</button></div></article>
+      <div class="acts"><button class="btn go" data-act="train" data-k="crew" ${cb ? 'disabled' : ''}>Train crew · ${money(CREW_COST)} · ${fmtDur(CREW_TIME)}</button>${cb && cb.startsWith('Unlocks') ? `<span class="warnc">${cb}</span>` : ''}</div></article>
     <article class="ac">${cardHead('Spare pilots', `<span class="chip ok">${S.pilots.length} of ${PILOT_MAX}</span>`)}<div class="sub">Swap a rested pilot into a tired jet from the Flightline.</div><div class="list">${spare}</div>
-      <div class="acts"><button class="btn go" data-act="train" data-k="pilot" ${pb ? 'disabled' : ''}>Train pilot · ${money(PILOT_COST)} · ${fmtDur(PILOT_TIME)}</button></div></article></div>`;
+      <div class="acts"><button class="btn go" data-act="train" data-k="pilot" ${pb ? 'disabled' : ''}>Train pilot · ${money(PILOT_COST)} · ${fmtDur(PILOT_TIME)}</button>${pb && pb.startsWith('Unlocks') ? `<span class="warnc">${pb}</span>` : ''}</div></article></div>`;
   const shop = SHOP.map(t => {
     const T = TYPES[t], blk = buyBlock(t), owned = S.fleet.filter(a => a.type === t && a.status !== 'lost').length;
     const loads = Object.keys(T.loadouts).join(' · ') || (T.tanker ? 'Fuel offload' : 'Radar orbit');
@@ -1906,28 +2047,39 @@ function updateTop() {
   const closed = S.t < S.runway.closedUntil; const rs = $('#rwystate');
   rs.textContent = closed ? 'Runway closed' : S.runway.busy ? 'Runway occupied' : 'Runway open';
   rs.style.color = closed ? 'var(--crit)' : '';
+  const camp = isCampaign();
+  $('#rankstat').hidden = !camp; $('#shiftstat').hidden = !(camp && S.shift);
+  if (camp) {
+    $('#rankname').textContent = CAREER[rankIdx()].short; $('#xpline').textContent = `Rank · ${S.xp} XP`;
+    if (S.shift) { $('#shiftleft').textContent = S.debrief ? 'Shift over' : fmtDur(S.shift.end - S.t); $('#shiftname').textContent = `${S.shift.name} ${S.shift.n} left`; }
+  }
 }
 function renderTabs() {
   const open = S.missions.filter(m => m.status === 'open'), urgent = open.some(m => m.type === 'INTERCEPT');
   const badge = { missions: open.length ? `<i class="${urgent ? '' : 'n'}">${open.length}</i>` : '', tac: S.flights.length ? `<i class="n">${S.flights.length}</i>` : '' };
-  const html = TABS.map(([k, l]) => `<button class="tab${UI.tab === k ? ' on' : ''}" data-act="tab" data-tab="${k}" aria-current="${UI.tab === k}">${l}${badge[k] || ''}</button>`).join('');
+  if (UI.tab === 'career' && !isCampaign()) UI.tab = 'missions';
+  const tabs = isCampaign() ? [TABS[0], ['career', 'Career'], ...TABS.slice(1)] : TABS;
+  const html = tabs.map(([k, l]) => `<button class="tab${UI.tab === k ? ' on' : ''}" data-act="tab" data-tab="${k}" aria-current="${UI.tab === k}">${l}${badge[k] || ''}</button>`).join('');
   if (html !== lastTabs) { $('#tabs').innerHTML = html; lastTabs = html; }
 }
 function overlayHTML() {
   if (S.over) return `<div class="brief" role="dialog" aria-labelledby="ovt"><p class="h">Message from wing command</p><h1 id="ovt">Relieved of command</h1>
     <p>Your command rating reached zero on ${fmtT(S.t)}. A new duty officer is taking over Kestrel Field.</p>
-    <ul><li><b>${S.stats.won}</b> operations completed, <b>${S.stats.failed}</b> failed</li><li><b>${S.stats.kills}</b> enemy aircraft destroyed</li><li><b>${S.stats.lost}</b> jets lost, <b>${S.stats.sorties}</b> sorties flown</li></ul>
-    <div class="acts"><button class="btn go big" data-act="new">Start a new shift</button></div></div>`;
-  if (S.started) return '';
-  return `<div class="brief" role="dialog" aria-labelledby="ovt"><p class="h">Shift briefing · Kestrel Field</p><h1 id="ovt">You have the ops desk</h1>
+    <ul>${isCampaign() ? `<li>Final rank <b>${CAREER[rankIdx()].name}</b> with ${S.xp} XP after <b>${S.shiftsDone}</b> shifts</li>` : ''}<li><b>${S.stats.won}</b> operations completed, <b>${S.stats.failed}</b> failed</li><li><b>${S.stats.kills}</b> enemy aircraft destroyed</li><li><b>${S.stats.lost}</b> jets lost, <b>${S.stats.sorties}</b> sorties flown</li></ul>
+    <div class="acts"><button class="btn go big" data-act="new">Start again</button></div></div>`;
+  if (S.started) return S.debrief ? debriefHTML() : '';
+  const intro = `<p class="h">Shift briefing · Kestrel Field</p><h1 id="ovt">You have the ops desk</h1>
     <p>Out the window is runway 27 and the ramp. On the terminal is everything that keeps it working. Order fuel and munitions, turn jets around, and send flights on tasking.</p>
     <ul><li><b>Tasking</b> pays the budget. Ignored or failed operations cost command rating.</li>
-      <li><b>Flightline</b>: refuel, arm and repair. Three ground crews work at a time.</li>
-      <li><b>Supply</b> comes in by C-130. Order before you run dry.</li>
+      <li><b>Flightline</b>: refuel, arm and repair. <b>Supply</b> comes in by C-130.</li>
+      <li><b>Base</b>: build hangars and air defences, train crews, buy aircraft.</li>
       <li><b>Tac map</b>: follow flights, change tactics in the air, send them to the tanker or home.</li>
       <li>Raids that reach the base burn fuel and crater the runway. Intercept them.</li></ul>
-    <p class="muted">Space pauses, keys 1 to 4 set speed. Progress is saved in this browser.</p>
-    <div class="acts">${UI.resume ? `<button class="btn go big" data-act="resume">Resume shift · ${fmtT(S.t)}</button><button class="btn" data-act="new">Start a new shift</button>` : `<button class="btn go big" data-act="start">Start shift</button>`}</div></div>`;
+    <p class="muted">Space pauses, keys 1 to 4 set speed. Progress is saved in this browser.</p>`;
+  if (UI.resume) return `<div class="brief" role="dialog" aria-labelledby="ovt">${intro}<div class="acts"><button class="btn go big" data-act="resume">Resume ${isCampaign() ? 'campaign' : 'free play'} · ${fmtT(S.t)}</button><button class="btn" data-act="new">New game</button></div></div>`;
+  return `<div class="brief" role="dialog" aria-labelledby="ovt">${intro}<div class="modes">
+    <button class="mode go" data-act="campaign"><b>Campaign</b><span>Work 8-hour shifts with three objectives each. Earn XP, get promoted and unlock new aircraft, base upgrades and training.</span></button>
+    <button class="mode" data-act="free"><b>Free play</b><span>No shifts and no ranks. Every aircraft and upgrade is available from the start.</span></button></div></div>`;
 }
 function renderUI(force) {
   if (!S) return;
@@ -1945,7 +2097,7 @@ function renderUI(force) {
     const html = tacSideHTML();
     if (html !== UI.lastSide) { $('#tacside').innerHTML = html; UI.lastSide = html; }
   } else {
-    const html = { supply: supplyHTML, flightline: flightlineHTML, missions: missionsHTML, base: baseHTML, log: logHTML }[UI.tab]();
+    const html = { supply: supplyHTML, flightline: flightlineHTML, missions: missionsHTML, base: baseHTML, career: careerHTML, log: logHTML }[UI.tab]();
     if (html !== UI.lastHTML) { panel.innerHTML = html; UI.lastHTML = html; }
   }
   if (changed) { panel.scrollTop = 0; UI.lastTab = UI.tab; }
@@ -2015,7 +2167,13 @@ function tacClick(e) {
 }
 
 // ---------- Input ----------
-function startShift() { S.started = true; UI.resume = false; if (!S.missions.length) { genMission('CAP'); log('Shift start. Viper 1-3 needs fuel and weapons, Viper 1-4 needs repairs.'); } }
+function beginGame(mode) {
+  clearSave(); S = newGame(mode); S.started = true;
+  UI.resume = false; UI.selM = null; UI.selF = null; UI.pick.clear(); UI.tab = 'missions';
+  genMission('CAP');
+  log('Shift start. Viper 1-3 needs fuel and weapons, Viper 1-4 needs repairs.');
+  if (mode === 'campaign') beginShift();
+}
 function doAct(d) {
   const a = d.id ? AC(d.id) : null, f = d.f ? FL(d.f) : null;
   switch (d.act) {
@@ -2046,9 +2204,10 @@ function doAct(d) {
     case 'rtb': if (f) goRTB(f, 'ordered home'); break;
     case 'tank': if (f) orderTanker(f); break;
     case 'maps': UI.tab = 'tac'; UI.selF = d.f; break;
-    case 'start': startShift(); break;
+    case 'campaign': case 'free': beginGame(d.act); break;
+    case 'nextshift': beginShift(); break;
     case 'resume': S.started = true; UI.resume = false; break;
-    case 'new': clearSave(); S = newGame(); UI.selM = null; UI.selF = null; UI.pick.clear(); UI.tab = 'missions'; startShift(); break;
+    case 'new': clearSave(); S = newGame(); UI.resume = false; UI.selM = null; UI.selF = null; UI.pick.clear(); UI.tab = 'missions'; break;
   }
 }
 document.addEventListener('pointerdown', e => { if (e.target.closest('#panel')) UI.down = true; });
@@ -2070,7 +2229,7 @@ document.addEventListener('keydown', e => {
 let lastNow = performance.now(), uiAcc = 0, saveAcc = 0;
 function frame(now) {
   const dtR = Math.min(0.1, Math.max(0, (now - lastNow) / 1000)); lastNow = now;
-  if (S.started && !S.over) { let g = dtR * SPEEDS[S.speed]; while (g > 1e-6) { const st = Math.min(0.25, g); step(st); g -= st; } }
+  if (S.started && !S.over && !S.debrief) { let g = dtR * SPEEDS[S.speed]; while (g > 1e-6 && !S.debrief && !S.over) { const st = Math.min(0.25, g); step(st); g -= st; } }
   drawScene(now, dtR);
   audioFrame();
   if (UI.tab === 'tac') drawTac(now);

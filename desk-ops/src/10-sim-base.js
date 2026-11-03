@@ -2,6 +2,7 @@
 function buildBlock(k) {
   const U = UPGRADES[k];
   if (S.base[k] >= U.max) return 'Fully built';
+  const lk = lockReason('up:' + k); if (lk) return lk;
   if (S.build) return 'Engineers busy';
   if (S.funds < U.cost) return 'No budget';
   return null;
@@ -14,6 +15,7 @@ function startBuild(k) {
   log(`Engineers started work: ${U.name} ${S.base[k] + 1}. Ready in ${fmtDur(U.time)}.`);
 }
 function trainBlock(kind) {
+  const lk = lockReason('train:' + kind); if (lk) return lk;
   if (S.training) return 'Instructors busy';
   if (kind === 'crew' && S.crews >= CREW_MAX) return 'Crew limit reached';
   if (kind === 'pilot' && S.pilots.length >= PILOT_MAX) return 'Pilot pool full';
@@ -37,6 +39,7 @@ function swapPilot(a) {
   a.pilot = best.name; a.fatigue = best.fatigue;
 }
 function buyBlock(type) {
+  const lk = lockReason('type:' + type); if (lk) return lk;
   if (freeSlot(type) < 0) return 'No parking, build a hangar';
   if (S.funds < TYPES[type].price) return 'No budget';
   return null;

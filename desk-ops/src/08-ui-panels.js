@@ -54,7 +54,7 @@ function supplyHTML() {
       <dt>Ground crews</dt><dd>${crewsBusy()} of ${S.crews} working</dd>
       <dt>Air defence</dt><dd>${S.base.patriot || S.base.shorad ? `${S.base.patriot} Patriot, ${S.base.shorad} Avenger` : 'None. Build it on the Base tab.'}</dd>
       <dt>Weather</dt><dd>${WX_NAME[S.wx.kind]}, ${S.wx.wind}° / ${S.wx.kt} kt</dd>
-      <dt>Next budget</dt><dd>06:00, about ${money(700 + S.rep * 6)}</dd>
+      <dt>Next budget</dt><dd>06:00, about ${money((700 + S.rep * 6) * budgetMul())}</dd>
       <dt>Record</dt><dd>${S.stats.won} won · ${S.stats.failed} failed · ${S.stats.kills} kills · ${S.stats.lost} jets lost</dd>
     </dl></div>
   </div>`;
@@ -181,7 +181,7 @@ function baseHTML() {
   const ups = Object.entries(UPGRADES).map(([k, U]) => {
     const blk = buildBlock(k), n = S.base[k];
     const btn = n >= U.max ? '<span class="muted">Fully built</span>' : `<button class="btn go" data-act="build" data-k="${k}" ${blk ? 'disabled' : ''}>Build · ${money(U.cost)} · ${fmtDur(U.time)}</button>`;
-    return `<article class="ac">${cardHead(U.name, lvlPips(n, U.max))}<div class="sub">${U.note}</div><div class="acts">${btn}${blk === 'No budget' ? '<span class="warnc">Not enough budget</span>' : ''}</div></article>`;
+    return `<article class="ac">${cardHead(U.name, lvlPips(n, U.max))}<div class="sub">${U.note}</div><div class="acts">${btn}${blk && blk !== 'Engineers busy' ? `<span class="warnc">${blk === 'No budget' ? 'Not enough budget' : blk}</span>` : ''}</div></article>`;
   }).join('');
   const tStatus = tr
     ? `<p>Training ${tr.kind === 'crew' ? 'a ground crew' : 'a pilot'}. Qualified ${fmtClock(tr.done)}, in ${fmtDur(tr.done - S.t)}.</p>${progBar((S.t - tr.start) / (tr.done - tr.start))}`
@@ -192,9 +192,9 @@ function baseHTML() {
     : '<div><span class="muted">No spare pilots yet. Tired pilots keep flying.</span></div>';
   const people = `<div class="grid">
     <article class="ac">${cardHead('Ground crews', `<span class="chip ok">${S.crews} of ${CREW_MAX}</span>`)}<div class="sub">Each crew refuels, arms or repairs one jet at a time. ${crewsBusy()} working now.</div>
-      <div class="acts"><button class="btn go" data-act="train" data-k="crew" ${cb ? 'disabled' : ''}>Train crew · ${money(CREW_COST)} · ${fmtDur(CREW_TIME)}</button></div></article>
+      <div class="acts"><button class="btn go" data-act="train" data-k="crew" ${cb ? 'disabled' : ''}>Train crew · ${money(CREW_COST)} · ${fmtDur(CREW_TIME)}</button>${cb && cb.startsWith('Unlocks') ? `<span class="warnc">${cb}</span>` : ''}</div></article>
     <article class="ac">${cardHead('Spare pilots', `<span class="chip ok">${S.pilots.length} of ${PILOT_MAX}</span>`)}<div class="sub">Swap a rested pilot into a tired jet from the Flightline.</div><div class="list">${spare}</div>
-      <div class="acts"><button class="btn go" data-act="train" data-k="pilot" ${pb ? 'disabled' : ''}>Train pilot · ${money(PILOT_COST)} · ${fmtDur(PILOT_TIME)}</button></div></article></div>`;
+      <div class="acts"><button class="btn go" data-act="train" data-k="pilot" ${pb ? 'disabled' : ''}>Train pilot · ${money(PILOT_COST)} · ${fmtDur(PILOT_TIME)}</button>${pb && pb.startsWith('Unlocks') ? `<span class="warnc">${pb}</span>` : ''}</div></article></div>`;
   const shop = SHOP.map(t => {
     const T = TYPES[t], blk = buyBlock(t), owned = S.fleet.filter(a => a.type === t && a.status !== 'lost').length;
     const loads = Object.keys(T.loadouts).join(' · ') || (T.tanker ? 'Fuel offload' : 'Radar orbit');

@@ -47,7 +47,8 @@ function goRTB(f, why) {
 function missionWin(m, f) {
   closeMission(m, 'done');
   S.funds += m.reward; S.rep = Math.min(100, S.rep + m.rep); S.stats.won++;
-  log(`Op. ${m.op} complete. ${money(m.reward)} added to the budget, rating +${m.rep}.`, 'good');
+  log(`Op. ${m.op} complete. ${money(m.reward)} added to the budget, rating +${m.rep}${isCampaign() ? `, +${20 + m.threat * 10} XP` : ''}.`, 'good');
+  addXP(20 + m.threat * 10);
   if (f) goRTB(f, 'mission complete');
 }
 function missionFail(m, why) {
@@ -96,7 +97,7 @@ function airCombat(f, en, dt) {
       const s = shoot(a, f, en.skill);
       if (s) {
         radio(`${a.call}: ${s.call}.`);
-        if (s.hit) { en.n--; S.stats.kills++; radio(`${a.call}: splash one${en.n ? '' : ', picture clean'}.`); }
+        if (s.hit) { en.n--; S.stats.kills++; addXP(4); radio(`${a.call}: splash one${en.n ? '' : ', picture clean'}.`); }
       }
     }
   }
@@ -260,9 +261,11 @@ function raidDestroyedByBase(r) {
   const pay = Math.round(m.reward / 2);
   S.funds += pay; S.rep = Math.min(100, S.rep + m.rep); S.stats.won++;
   log(`Op. ${m.op}: raid wiped out by base air defences. ${money(pay)} bonus, rating +${m.rep}.`, 'good');
+  addXP(10 + m.threat * 5);
   if (f) goRTB(f, 'raid destroyed');
 }
 function baseAttack(r) {
+  if (S.shift) S.shift.raidsHit++;
   const sev = clamp(r.n / (r.n0 || r.n), 0.3, 1);
   const fuelLoss = Math.round(S.res.fuel * rnd(0.15, 0.3) * sev);
   S.res.fuel -= fuelLoss;
@@ -329,7 +332,7 @@ function step(dt) {
   tickBase(dt);
   for (const m of S.missions) {
     if (m.status === 'open' && m.expires && S.t >= m.expires) {
-      closeMission(m, 'expired'); S.rep = Math.max(0, S.rep - 3); log(`Op. ${m.op} expired unflown. Rating −3.`, 'warn');
+      closeMission(m, 'expired'); S.rep = Math.max(0, S.rep - 3); S.stats.expired = (S.stats.expired || 0) + 1; log(`Op. ${m.op} expired unflown. Rating −3.`, 'warn');
     }
   }
   S.missions = S.missions.filter(m => m.status === 'open' || m.status === 'active' || S.t - m.closedAt < 45);
@@ -338,8 +341,9 @@ function step(dt) {
     S.nextMission = S.t + rnd(28, 55) - Math.min(15, Math.floor(S.t / 1440) * 3);
   }
   const di = Math.floor((S.t - 360) / 1440);
-  if (di > S.budgetDay) { S.budgetDay = di; const amt = 700 + S.rep * 6; S.funds += amt; log(`06:00 budget allocation: ${money(amt)}.`, 'good'); }
+  if (di > S.budgetDay) { S.budgetDay = di; const amt = Math.round((700 + S.rep * 6) * budgetMul()); S.funds += amt; log(`06:00 budget allocation: ${money(amt)}.`, 'good'); }
   if (S.t >= S.wx.until) newWeather();
   S.fx = S.fx.filter(x => S.t - x.born < x.life);
+  if (isCampaign() && S.shift && !S.debrief && !S.over && S.t >= S.shift.end) endShift();
   if (S.rep <= 0 && !S.over) { S.over = true; log('Command rating reached zero. You have been relieved of command.', 'crit'); }
 }

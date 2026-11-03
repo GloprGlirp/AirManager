@@ -14,6 +14,7 @@ Leertaste pausiert, Tasten 1–4 ändern das Tempo.
 
 ## Was drin ist
 
+- **Kampagne:** Früh-, Spät- und Nachtschicht (je 8 Spielstunden) mit 3 Zielen pro Schicht, Schichtbericht, XP und Beförderungen vom Second Lieutenant bis zum Brigadier General. Flugzeuge, Ausbauten und Ausbildung werden mit dem Rang freigeschaltet. Daneben gibt es **Free Play** mit allem freigeschaltet.
 - **Fenster:** Jets rollen, starten mit Nachbrenner und landen; C-130 bringt Nachschub; Tag/Nacht, Wetter, Luftangriffe mit Rauch und Kratern; Hangars und Kran beim Bau; Patriot- und Avenger-Starts.
 - **Tasking:** CAP, Strike, Recon und Intercept mit Taktik (Aggression, Formation, ROE, Flughöhe).
 - **Flightline:** Tanken, Bewaffnen, Reparieren, Turnaround, Pilotentausch.
@@ -34,6 +35,7 @@ Der Code liegt in Teilen unter `src/`, `build.sh` setzt daraus `public/desk-ops/
 | `04-sim-ground.js` | Bodencrews, Logistik, Startbahn, Rollwege |
 | `05-sim-air.js` | Flüge, Luftkampf, SAMs, Raids, Einsätze, Spielschritt |
 | `10-sim-base.js` | Bau, Ausbildung, Beschaffung |
+| `13-campaign.js` | Kampagne: Schichten, Ziele, XP, Ränge, Freischaltungen |
 | `06/07/12-scene-*.js` | Fensteransicht (Canvas) |
 | `08-ui-panels.js`, `09-ui-main.js` | Terminal, Tac Map, Eingabe, Hauptschleife |
 | `11-audio.js` | Sound |

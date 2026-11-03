@@ -156,8 +156,9 @@ function newFleet() {
     return a;
   });
 }
-function newGame() {
-  return { v: 2, t: 6 * 60 + 40, funds: 2400, rep: 60, speed: 1, started: false, over: false,
+function newGame(mode = 'free') {
+  return { v: 2, mode, xp: 0, shiftsDone: 0, stars: 0, shift: null, debrief: null,
+    t: mode === 'campaign' ? 6 * 60 : 6 * 60 + 40, funds: 2400, rep: 60, speed: 1, started: false, over: false,
     crews: 3, base: { hangar: 0, patriot: 0, shorad: 0, fuelfarm: 0, bunker: 0, quarters: 0 }, build: null, training: null, pilots: [],
     res: { fuel: 360, aim120: 14, aim9: 18, agm65: 8, gbu12: 10, gun: 6000, chaff: 520, flare: 480, parts: 16, pac3: 0, stinger: 0 },
     fleet: newFleet(), missions: [], flights: [], raids: [], deliveries: [], cargo: [], fx: [],
@@ -195,6 +196,7 @@ function migrate(o) {
     o.res.pac3 = 0; o.res.stinger = 0;
     o.fleet.forEach((a, i) => { a.slot = SPOTS.includes(a.spot) ? SPOTS.indexOf(a.spot) : i; delete a.spot; });
   }
+  if (!o.mode) Object.assign(o, { mode: 'free', xp: 0, shiftsDone: 0, stars: 0, shift: null, debrief: null });
   return o;
 }
 function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* ignore */ } }
